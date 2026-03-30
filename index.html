@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Justa — Gestão de Demandas</title>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
   :root {
     --navy: #060A3E;
@@ -39,7 +40,6 @@
     min-height: 100vh;
   }
 
-  /* ── SIDEBAR ── */
   .sidebar {
     position: fixed; top: 0; left: 0;
     width: 220px; height: 100vh;
@@ -70,10 +70,7 @@
     margin-top: 4px;
   }
 
-  .sidebar-nav {
-    flex: 1;
-    padding: 24px 0;
-  }
+  .sidebar-nav { flex: 1; padding: 24px 0; }
 
   .nav-section {
     font-size: 9px; font-weight: 500;
@@ -95,11 +92,7 @@
   .nav-item:hover { color: var(--white); background: rgba(255,255,255,0.05); }
   .nav-item.active { color: var(--gold-light); border-left-color: var(--gold); background: rgba(184,151,42,0.08); }
 
-  .nav-icon {
-    width: 16px; height: 16px;
-    opacity: 0.7;
-    flex-shrink: 0;
-  }
+  .nav-icon { width: 16px; height: 16px; opacity: 0.7; flex-shrink: 0; }
   .nav-item.active .nav-icon { opacity: 1; }
 
   .sidebar-footer {
@@ -108,12 +101,7 @@
     font-size: 11px; color: rgba(255,255,255,0.3);
   }
 
-  /* ── MAIN ── */
-  .main {
-    margin-left: 220px;
-    min-height: 100vh;
-    display: flex; flex-direction: column;
-  }
+  .main { margin-left: 220px; min-height: 100vh; display: flex; flex-direction: column; }
 
   .topbar {
     background: var(--white);
@@ -129,32 +117,20 @@
     color: var(--navy);
   }
 
-  .topbar-right {
-    display: flex; align-items: center; gap: 12px;
-  }
-
-  .topbar-date {
-    font-size: 12px; color: var(--gray-text);
-  }
+  .topbar-right { display: flex; align-items: center; gap: 12px; }
+  .topbar-date { font-size: 12px; color: var(--gray-text); }
 
   .btn-nova {
-    background: var(--navy);
-    color: var(--white);
+    background: var(--navy); color: var(--white);
     border: none; cursor: pointer;
-    padding: 9px 18px;
-    font-size: 13px; font-weight: 500;
+    padding: 9px 18px; font-size: 13px; font-weight: 500;
     font-family: 'DM Sans', sans-serif;
-    border-radius: 6px;
-    transition: all 0.15s;
-    letter-spacing: 0.3px;
+    border-radius: 6px; transition: all 0.15s;
   }
-
   .btn-nova:hover { background: var(--navy-mid); }
 
-  /* ── CONTENT ── */
   .content { padding: 28px 32px; flex: 1; }
 
-  /* ── METRICS ── */
   .metrics-grid {
     display: grid; grid-template-columns: repeat(4, minmax(0, 1fr));
     gap: 14px; margin-bottom: 28px;
@@ -169,10 +145,8 @@
   }
 
   .metric-card::before {
-    content: '';
-    position: absolute; top: 0; left: 0;
-    width: 3px; height: 100%;
-    background: var(--gold);
+    content: ''; position: absolute; top: 0; left: 0;
+    width: 3px; height: 100%; background: var(--gold);
   }
 
   .metric-label {
@@ -187,7 +161,6 @@
     color: var(--navy); line-height: 1;
   }
 
-  /* ── FILTERS ── */
   .filters-bar {
     display: flex; gap: 6px; flex-wrap: wrap;
     margin-bottom: 20px; align-items: center;
@@ -198,61 +171,45 @@
     border: 1px solid var(--gray-light);
     border-radius: 99px; cursor: pointer;
     background: var(--white); color: var(--gray-text);
-    font-family: 'DM Sans', sans-serif;
-    transition: all 0.15s;
+    font-family: 'DM Sans', sans-serif; transition: all 0.15s;
   }
   .filter-chip:hover { border-color: var(--navy); color: var(--navy); }
   .filter-chip.active { background: var(--navy); color: var(--white); border-color: var(--navy); }
 
   .search-input {
-    margin-left: auto;
-    padding: 7px 14px;
+    margin-left: auto; padding: 7px 14px;
     font-size: 13px; font-family: 'DM Sans', sans-serif;
-    border: 1px solid var(--gray-light);
-    border-radius: 6px;
-    background: var(--white);
-    color: var(--navy);
-    width: 200px;
-    outline: none;
-    transition: border-color 0.15s;
+    border: 1px solid var(--gray-light); border-radius: 6px;
+    background: var(--white); color: var(--navy);
+    width: 200px; outline: none; transition: border-color 0.15s;
   }
   .search-input:focus { border-color: var(--navy); }
   .search-input::placeholder { color: var(--gray-mid); }
 
-  /* ── TABLE ── */
   .table-wrap {
     background: var(--white);
     border: 1px solid var(--gray-light);
-    border-radius: 10px;
-    overflow: hidden;
+    border-radius: 10px; overflow: hidden;
   }
 
   table { width: 100%; border-collapse: collapse; }
-
-  thead tr {
-    background: var(--navy);
-  }
-
+  thead tr { background: var(--navy); }
   thead th {
-    padding: 12px 16px;
-    font-size: 10px; font-weight: 500;
+    padding: 12px 16px; font-size: 10px; font-weight: 500;
     text-transform: uppercase; letter-spacing: 1.5px;
-    color: rgba(255,255,255,0.6);
-    text-align: left;
+    color: rgba(255,255,255,0.6); text-align: left;
   }
 
   tbody tr {
     border-bottom: 1px solid var(--gray-light);
-    cursor: pointer;
-    transition: background 0.12s;
+    cursor: pointer; transition: background 0.12s;
   }
   tbody tr:last-child { border-bottom: none; }
   tbody tr:hover { background: var(--off-white); }
 
   tbody td {
-    padding: 14px 16px;
-    font-size: 13px; color: var(--navy);
-    vertical-align: middle;
+    padding: 14px 16px; font-size: 13px;
+    color: var(--navy); vertical-align: middle;
   }
 
   .td-nome { font-weight: 500; }
@@ -262,15 +219,13 @@
     width: 34px; height: 34px; border-radius: 50%;
     display: inline-flex; align-items: center; justify-content: center;
     font-size: 12px; font-weight: 500;
-    background: var(--navy); color: var(--gold-light);
-    flex-shrink: 0;
+    background: var(--navy); color: var(--gold-light); flex-shrink: 0;
   }
 
   .td-avatar { display: flex; align-items: center; gap: 10px; }
 
   .badge {
-    display: inline-block;
-    padding: 3px 10px; border-radius: 99px;
+    display: inline-block; padding: 3px 10px; border-radius: 99px;
     font-size: 11px; font-weight: 500; white-space: nowrap;
   }
   .badge-aberto     { background: var(--status-open-bg);     color: var(--status-open-fg); }
@@ -284,7 +239,11 @@
     color: var(--gray-text); font-size: 14px;
   }
 
-  /* ── MODAL ── */
+  .loading {
+    text-align: center; padding: 48px 24px;
+    color: var(--gray-text); font-size: 13px;
+  }
+
   .modal-overlay {
     display: none; position: fixed;
     top: 0; left: 0; width: 100%; height: 100%;
@@ -295,29 +254,24 @@
   .modal-overlay.open { display: flex; }
 
   .modal-box {
-    background: var(--white);
-    border-radius: 12px;
-    width: 100%; max-width: 460px;
-    overflow: hidden;
+    background: var(--white); border-radius: 12px;
+    width: 100%; max-width: 460px; overflow: hidden;
     box-shadow: 0 20px 60px rgba(6,10,62,0.2);
   }
 
   .modal-header {
-    background: var(--navy);
-    padding: 20px 24px;
+    background: var(--navy); padding: 20px 24px;
     display: flex; align-items: center; justify-content: space-between;
   }
 
   .modal-header h2 {
     font-family: 'Cormorant Garamond', serif;
-    font-size: 20px; font-weight: 600;
-    color: var(--white);
+    font-size: 20px; font-weight: 600; color: var(--white);
   }
 
   .modal-close {
     background: none; border: none; cursor: pointer;
-    color: rgba(255,255,255,0.5); font-size: 20px; line-height: 1;
-    padding: 2px 6px;
+    color: rgba(255,255,255,0.5); font-size: 20px; line-height: 1; padding: 2px 6px;
   }
   .modal-close:hover { color: var(--white); }
 
@@ -336,23 +290,19 @@
     color: var(--navy); background: var(--white);
     outline: none; transition: border-color 0.15s;
   }
-  .field input:focus, .field select:focus, .field textarea:focus {
-    border-color: var(--navy);
-  }
+  .field input:focus, .field select:focus, .field textarea:focus { border-color: var(--navy); }
   .field textarea { resize: vertical; min-height: 72px; }
   .fields-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 
   .modal-footer {
-    padding: 16px 24px;
-    border-top: 1px solid var(--gray-light);
+    padding: 16px 24px; border-top: 1px solid var(--gray-light);
     display: flex; gap: 10px; justify-content: flex-end;
   }
 
   .btn-sec {
     padding: 9px 18px; font-size: 13px; font-family: 'DM Sans', sans-serif;
     border: 1px solid var(--gray-light); border-radius: 6px;
-    background: transparent; color: var(--gray-text); cursor: pointer;
-    transition: all 0.15s;
+    background: transparent; color: var(--gray-text); cursor: pointer; transition: all 0.15s;
   }
   .btn-sec:hover { border-color: var(--navy); color: var(--navy); }
 
@@ -363,16 +313,15 @@
     font-weight: 500; transition: all 0.15s;
   }
   .btn-prim:hover { background: var(--navy-mid); }
+  .btn-prim:disabled { opacity: 0.5; cursor: not-allowed; }
 
   .btn-danger {
     padding: 9px 18px; font-size: 13px; font-family: 'DM Sans', sans-serif;
     border: 1px solid #E0B0B0; border-radius: 6px;
-    background: transparent; color: #B03030; cursor: pointer;
-    transition: all 0.15s;
+    background: transparent; color: #B03030; cursor: pointer; transition: all 0.15s;
   }
   .btn-danger:hover { background: #FFF0F0; }
 
-  /* ── DETAIL MODAL ── */
   .detail-section {
     margin-bottom: 16px; padding-bottom: 16px;
     border-bottom: 1px solid var(--gray-light);
@@ -386,12 +335,15 @@
   .detail-row span:first-child { color: var(--gray-text); }
   .detail-row span:last-child { font-weight: 500; color: var(--navy); }
 
-  /* ── GOLD ACCENT ── */
-  .gold-line {
-    display: block; height: 1px;
-    background: linear-gradient(90deg, var(--gold) 0%, transparent 100%);
-    margin: 4px 0 16px;
+  .toast {
+    position: fixed; bottom: 24px; right: 24px;
+    background: var(--navy); color: var(--white);
+    padding: 12px 20px; border-radius: 8px;
+    font-size: 13px; z-index: 999;
+    opacity: 0; transition: opacity 0.3s;
+    pointer-events: none;
   }
+  .toast.show { opacity: 1; }
 
   @media (max-width: 768px) {
     .sidebar { width: 0; overflow: hidden; }
@@ -399,15 +351,11 @@
     .metrics-grid { grid-template-columns: repeat(2, 1fr); }
     .topbar, .content { padding: 14px 16px; }
     .fields-row { grid-template-columns: 1fr; }
-    table thead { display: none; }
-    tbody td:first-child { padding-top: 14px; }
-    tbody td:last-child { padding-bottom: 14px; }
   }
 </style>
 </head>
 <body>
 
-<!-- SIDEBAR -->
 <aside class="sidebar">
   <div class="sidebar-logo">
     <div class="logo-text">JUSTA</div>
@@ -415,22 +363,24 @@
   </div>
   <nav class="sidebar-nav">
     <div class="nav-section">Gestão</div>
-    <div class="nav-item active" onclick="showView('demandas')">
+    <div class="nav-item active" id="nav-demandas" onclick="showView('demandas')">
       <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
         <rect x="1" y="2" width="14" height="12" rx="2"/><line x1="5" y1="6" x2="11" y2="6"/><line x1="5" y1="9" x2="9" y2="9"/>
       </svg>
       Demandas
     </div>
-    <div class="nav-item" onclick="showView('clientes')">
+    <div class="nav-item" id="nav-clientes" onclick="showView('clientes')">
       <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
         <circle cx="8" cy="5" r="3"/><path d="M2 13c0-3 2.7-5 6-5s6 2 6 5"/>
       </svg>
       Clientes
     </div>
     <div class="nav-section">Equipe</div>
-    <div class="nav-item" onclick="showView('equipe')">
+    <div class="nav-item" id="nav-equipe" onclick="showView('equipe')">
       <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
-        <circle cx="5" cy="5" r="2.5"/><circle cx="11" cy="5" r="2.5"/><path d="M0 13c0-2.5 2-4 5-4"/><path d="M16 13c0-2.5-2-4-5-4"/><path d="M5 13c0-2.5 1.3-4 3-4s3 1.5 3 4"/>
+        <circle cx="5" cy="5" r="2.5"/><circle cx="11" cy="5" r="2.5"/>
+        <path d="M0 13c0-2.5 2-4 5-4"/><path d="M16 13c0-2.5-2-4-5-4"/>
+        <path d="M5 13c0-2.5 1.3-4 3-4s3 1.5 3 4"/>
       </svg>
       Colaboradores
     </div>
@@ -438,37 +388,23 @@
   <div class="sidebar-footer">Justa © 2026</div>
 </aside>
 
-<!-- MAIN -->
 <main class="main">
   <div class="topbar">
     <div class="topbar-title" id="view-title">Demandas</div>
     <div class="topbar-right">
       <span class="topbar-date" id="topbar-date"></span>
-      <button class="btn-nova" onclick="openModal()">+ Nova demanda</button>
+      <button class="btn-nova" onclick="openModal('modal-nova')">+ Nova demanda</button>
     </div>
   </div>
 
   <div class="content">
 
-    <!-- DEMANDAS VIEW -->
     <div id="view-demandas">
       <div class="metrics-grid">
-        <div class="metric-card">
-          <div class="metric-label">Total de demandas</div>
-          <div class="metric-value" id="m-total">0</div>
-        </div>
-        <div class="metric-card">
-          <div class="metric-label">Em andamento</div>
-          <div class="metric-value" id="m-andamento">0</div>
-        </div>
-        <div class="metric-card">
-          <div class="metric-label">Aguardando doc.</div>
-          <div class="metric-value" id="m-aguardando">0</div>
-        </div>
-        <div class="metric-card">
-          <div class="metric-label">Concluídos</div>
-          <div class="metric-value" id="m-concluidos">0</div>
-        </div>
+        <div class="metric-card"><div class="metric-label">Total de demandas</div><div class="metric-value" id="m-total">—</div></div>
+        <div class="metric-card"><div class="metric-label">Em andamento</div><div class="metric-value" id="m-andamento">—</div></div>
+        <div class="metric-card"><div class="metric-label">Aguardando doc.</div><div class="metric-value" id="m-aguardando">—</div></div>
+        <div class="metric-card"><div class="metric-label">Concluídos</div><div class="metric-value" id="m-concluidos">—</div></div>
       </div>
 
       <div class="filters-bar">
@@ -485,19 +421,14 @@
         <table>
           <thead>
             <tr>
-              <th>Cliente</th>
-              <th>Serviço</th>
-              <th>Responsável</th>
-              <th>Status</th>
-              <th>Data</th>
+              <th>Cliente</th><th>Serviço</th><th>Responsável</th><th>Status</th><th>Data</th>
             </tr>
           </thead>
-          <tbody id="tabela-demandas"></tbody>
+          <tbody id="tabela-demandas"><tr><td colspan="5"><div class="loading">Carregando...</div></td></tr></tbody>
         </table>
       </div>
     </div>
 
-    <!-- CLIENTES VIEW -->
     <div id="view-clientes" style="display:none">
       <div class="table-wrap">
         <table>
@@ -507,8 +438,10 @@
       </div>
     </div>
 
-    <!-- EQUIPE VIEW -->
     <div id="view-equipe" style="display:none">
+      <div style="display:flex;justify-content:flex-end;margin-bottom:16px;">
+        <button class="btn-nova" onclick="openModal('modal-equipe-cfg')">+ Adicionar colaborador</button>
+      </div>
       <div class="table-wrap">
         <table>
           <thead><tr><th>Colaborador</th><th>Em aberto</th><th>Em andamento</th><th>Concluídos</th><th>Total</th></tr></thead>
@@ -529,14 +462,8 @@
     </div>
     <div class="modal-body">
       <div class="fields-row">
-        <div class="field">
-          <label>Nome do cliente *</label>
-          <input type="text" id="f-nome" placeholder="Nome completo" />
-        </div>
-        <div class="field">
-          <label>Telefone</label>
-          <input type="text" id="f-tel" placeholder="(77) 9 0000-0000" />
-        </div>
+        <div class="field"><label>Nome do cliente *</label><input type="text" id="f-nome" placeholder="Nome completo" /></div>
+        <div class="field"><label>Telefone</label><input type="text" id="f-tel" placeholder="(77) 9 0000-0000" /></div>
       </div>
       <div class="field">
         <label>Tipo de serviço *</label>
@@ -551,9 +478,7 @@
       </div>
       <div class="field">
         <label>Responsável *</label>
-        <select id="f-resp">
-          <option value="">Selecione...</option>
-        </select>
+        <select id="f-resp"><option value="">Selecione...</option></select>
       </div>
       <div class="field">
         <label>Observações</label>
@@ -562,7 +487,7 @@
     </div>
     <div class="modal-footer">
       <button class="btn-sec" onclick="closeModal('modal-nova')">Cancelar</button>
-      <button class="btn-prim" onclick="salvarDemanda()">Salvar demanda</button>
+      <button class="btn-prim" id="btn-salvar" onclick="salvarDemanda()">Salvar demanda</button>
     </div>
   </div>
 </div>
@@ -603,7 +528,7 @@
   </div>
 </div>
 
-<!-- MODAL EQUIPE CONFIG -->
+<!-- MODAL EQUIPE -->
 <div class="modal-overlay" id="modal-equipe-cfg">
   <div class="modal-box">
     <div class="modal-header">
@@ -611,10 +536,12 @@
       <button class="modal-close" onclick="closeModal('modal-equipe-cfg')">×</button>
     </div>
     <div class="modal-body">
-      <p style="font-size:13px;color:var(--gray-text);margin-bottom:16px;">Adicione os nomes dos colaboradores que receberão demandas.</p>
+      <p style="font-size:13px;color:var(--gray-text);margin-bottom:16px;">Adicione os colaboradores que receberão demandas.</p>
       <div id="equipe-lista" style="display:flex;flex-direction:column;gap:8px;margin-bottom:16px;"></div>
       <div style="display:flex;gap:8px;">
-        <input type="text" id="novo-colaborador" placeholder="Nome do colaborador" style="flex:1;padding:9px 12px;font-size:13px;font-family:'DM Sans',sans-serif;border:1px solid var(--gray-light);border-radius:6px;outline:none;" onkeydown="if(event.key==='Enter')addColaborador()" />
+        <input type="text" id="novo-colaborador" placeholder="Nome do colaborador"
+          style="flex:1;padding:9px 12px;font-size:13px;font-family:'DM Sans',sans-serif;border:1px solid var(--gray-light);border-radius:6px;outline:none;color:var(--navy);"
+          onkeydown="if(event.key==='Enter')addColaborador()" />
         <button class="btn-prim" onclick="addColaborador()">Adicionar</button>
       </div>
     </div>
@@ -624,49 +551,42 @@
   </div>
 </div>
 
+<div class="toast" id="toast"></div>
+
 <script>
-// ── STATE ──
-let demandas = JSON.parse(localStorage.getItem('justa_demandas') || '[]');
-let colaboradores = JSON.parse(localStorage.getItem('justa_colaboradores') || '["Colaborador 1","Colaborador 2","Colaborador 3"]');
+const SUPABASE_URL = 'https://gjsdczfvvizrtyxvsscj.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_HUCnu8jX0XNUgZWOEVSow_zmB2ZRhz';
+
+const { createClient } = supabase;
+const db = createClient(SUPABASE_URL, SUPABASE_KEY);
+
+let demandas = [];
+let colaboradores = [];
 let filtroAtivo = 'todos';
 let detalheId = null;
-let nextId = parseInt(localStorage.getItem('justa_nextid') || '1');
 
-function save() {
-  localStorage.setItem('justa_demandas', JSON.stringify(demandas));
-  localStorage.setItem('justa_colaboradores', JSON.stringify(colaboradores));
-  localStorage.setItem('justa_nextid', String(nextId));
+function toast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg; el.classList.add('show');
+  setTimeout(()=>el.classList.remove('show'), 2500);
 }
 
-// ── DATE ──
 function hoje() {
   const d = new Date();
   return `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}`;
 }
 
-document.getElementById('topbar-date').textContent = (() => {
-  const d = new Date();
-  return d.toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: 'long', year: 'numeric' });
-})();
+document.getElementById('topbar-date').textContent = new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: 'long', year: 'numeric' });
 
-// ── INICIAIS / AVATAR ──
 function iniciais(nome) {
-  return nome.trim().split(' ').filter(Boolean).slice(0,2).map(n=>n[0]).join('').toUpperCase();
+  return (nome||'').trim().split(' ').filter(Boolean).slice(0,2).map(n=>n[0]).join('').toUpperCase();
 }
 
-// ── BADGE ──
 function badge(status) {
-  const map = {
-    'Em aberto': 'badge-aberto',
-    'Em andamento': 'badge-andamento',
-    'Aguardando doc.': 'badge-aguardando',
-    'Concluído': 'badge-concluido',
-    'Cancelado': 'badge-cancelado',
-  };
+  const map = { 'Em aberto':'badge-aberto','Em andamento':'badge-andamento','Aguardando doc.':'badge-aguardando','Concluído':'badge-concluido','Cancelado':'badge-cancelado' };
   return `<span class="badge ${map[status]||'badge-aberto'}">${status}</span>`;
 }
 
-// ── METRICS ──
 function renderMetrics() {
   document.getElementById('m-total').textContent = demandas.length;
   document.getElementById('m-andamento').textContent = demandas.filter(d=>d.status==='Em andamento').length;
@@ -674,67 +594,64 @@ function renderMetrics() {
   document.getElementById('m-concluidos').textContent = demandas.filter(d=>d.status==='Concluído').length;
 }
 
-// ── TABLE DEMANDAS ──
 function renderTable() {
   renderMetrics();
-  const search = (document.getElementById('search-input')?.value || '').toLowerCase();
-  let lista = filtroAtivo === 'todos' ? demandas : demandas.filter(d=>d.status===filtroAtivo);
-  if (search) lista = lista.filter(d=>d.nome.toLowerCase().includes(search));
+  const search = (document.getElementById('search-input')?.value||'').toLowerCase();
+  let lista = filtroAtivo==='todos' ? demandas : demandas.filter(d=>d.status===filtroAtivo);
+  if (search) lista = lista.filter(d=>(d.nome||'').toLowerCase().includes(search));
   const tbody = document.getElementById('tabela-demandas');
-  if (!lista.length) {
-    tbody.innerHTML = `<tr><td colspan="5"><div class="empty-state">Nenhuma demanda encontrada.</div></td></tr>`;
-    return;
-  }
-  tbody.innerHTML = lista.map(d => `
+  if (!lista.length) { tbody.innerHTML=`<tr><td colspan="5"><div class="empty-state">Nenhuma demanda encontrada.</div></td></tr>`; return; }
+  tbody.innerHTML = lista.map(d=>`
     <tr onclick="openDetalhe(${d.id})">
-      <td><div class="td-avatar">
-        <div class="avatar">${iniciais(d.nome)}</div>
-        <div><div class="td-nome">${d.nome}</div><div class="td-sub">${d.tel||'—'}</div></div>
-      </div></td>
-      <td>${d.tipo}</td>
-      <td>${d.resp}</td>
+      <td><div class="td-avatar"><div class="avatar">${iniciais(d.nome)}</div>
+        <div><div class="td-nome">${d.nome}</div><div class="td-sub">${d.tel||'—'}</div></div></div></td>
+      <td>${d.tipo||'—'}</td>
+      <td>${d.resp||'—'}</td>
       <td>${badge(d.status)}</td>
-      <td style="color:var(--gray-text);font-size:12px;">${d.data}</td>
+      <td style="color:var(--gray-text);font-size:12px;">${d.data||'—'}</td>
     </tr>`).join('');
 }
 
-// ── TABLE CLIENTES ──
 function renderClientes() {
   const map = {};
-  demandas.forEach(d=>{
-    if (!map[d.nome]) map[d.nome] = { tel: d.tel, count: 0, ultima: d.data };
-    map[d.nome].count++;
-    map[d.nome].ultima = d.data;
-  });
+  demandas.forEach(d=>{ if(!map[d.nome]) map[d.nome]={tel:d.tel,count:0,ultima:d.data}; map[d.nome].count++; map[d.nome].ultima=d.data; });
   const tbody = document.getElementById('tabela-clientes');
   const entries = Object.entries(map);
-  if (!entries.length) { tbody.innerHTML = `<tr><td colspan="4"><div class="empty-state">Nenhum cliente cadastrado.</div></td></tr>`; return; }
-  tbody.innerHTML = entries.map(([nome, info]) => `
-    <tr>
-      <td><div class="td-avatar"><div class="avatar">${iniciais(nome)}</div><div class="td-nome">${nome}</div></div></td>
-      <td style="font-size:13px;color:var(--gray-text);">${info.tel||'—'}</td>
-      <td><span class="badge badge-andamento">${info.count}</span></td>
-      <td style="font-size:12px;color:var(--gray-text);">${info.ultima}</td>
-    </tr>`).join('');
+  if (!entries.length) { tbody.innerHTML=`<tr><td colspan="4"><div class="empty-state">Nenhum cliente cadastrado.</div></td></tr>`; return; }
+  tbody.innerHTML = entries.map(([nome,info])=>`
+    <tr><td><div class="td-avatar"><div class="avatar">${iniciais(nome)}</div><div class="td-nome">${nome}</div></div></td>
+    <td style="font-size:13px;color:var(--gray-text);">${info.tel||'—'}</td>
+    <td><span class="badge badge-andamento">${info.count}</span></td>
+    <td style="font-size:12px;color:var(--gray-text);">${info.ultima||'—'}</td></tr>`).join('');
 }
 
-// ── TABLE EQUIPE ──
-function renderEquipe() {
+function renderEquipeTabela() {
   const tbody = document.getElementById('tabela-equipe');
-  if (!colaboradores.length) { tbody.innerHTML = `<tr><td colspan="5"><div class="empty-state">Nenhum colaborador cadastrado.</div></td></tr>`; return; }
-  tbody.innerHTML = colaboradores.map(c => {
-    const mine = demandas.filter(d=>d.resp===c);
-    return `<tr>
-      <td><div class="td-avatar"><div class="avatar">${iniciais(c)}</div><div class="td-nome">${c}</div></div></td>
-      <td>${mine.filter(d=>d.status==='Em aberto').length}</td>
-      <td>${mine.filter(d=>d.status==='Em andamento').length}</td>
-      <td>${mine.filter(d=>d.status==='Concluído').length}</td>
-      <td><strong>${mine.length}</strong></td>
-    </tr>`;
+  if (!colaboradores.length) { tbody.innerHTML=`<tr><td colspan="5"><div class="empty-state">Nenhum colaborador cadastrado.</div></td></tr>`; return; }
+  tbody.innerHTML = colaboradores.map(c=>{
+    const mine = demandas.filter(d=>d.resp===c.nome);
+    return `<tr><td><div class="td-avatar"><div class="avatar">${iniciais(c.nome)}</div><div class="td-nome">${c.nome}</div></div></td>
+    <td>${mine.filter(d=>d.status==='Em aberto').length}</td>
+    <td>${mine.filter(d=>d.status==='Em andamento').length}</td>
+    <td>${mine.filter(d=>d.status==='Concluído').length}</td>
+    <td><strong>${mine.length}</strong></td></tr>`;
   }).join('');
 }
 
-// ── FILTER ──
+function renderEquipeSelect() {
+  const sel = document.getElementById('f-resp');
+  sel.innerHTML = '<option value="">Selecione...</option>' + colaboradores.map(c=>`<option>${c.nome}</option>`).join('');
+}
+
+function renderEquipeListaConfig() {
+  const lista = document.getElementById('equipe-lista');
+  lista.innerHTML = colaboradores.map(c=>`
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 12px;background:var(--off-white);border-radius:6px;">
+      <span style="font-size:13px;">${c.nome}</span>
+      <button onclick="removeColaborador(${c.id})" style="background:none;border:none;cursor:pointer;color:var(--gray-text);font-size:16px;padding:0 4px;">×</button>
+    </div>`).join('');
+}
+
 function setFilter(el) {
   filtroAtivo = el.dataset.filter;
   document.querySelectorAll('.filter-chip').forEach(b=>b.classList.remove('active'));
@@ -742,24 +659,21 @@ function setFilter(el) {
   renderTable();
 }
 
-// ── VIEWS ──
 function showView(view) {
-  ['demandas','clientes','equipe'].forEach(v=>{
-    document.getElementById('view-'+v).style.display = v===view ? 'block' : 'none';
-  });
-  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
-  event.currentTarget.classList.add('active');
-  const titles = { demandas: 'Demandas', clientes: 'Clientes', equipe: 'Colaboradores' };
+  ['demandas','clientes','equipe'].forEach(v=>document.getElementById('view-'+v).style.display=v===view?'block':'none');
+  ['demandas','clientes','equipe'].forEach(v=>document.getElementById('nav-'+v).classList.remove('active'));
+  document.getElementById('nav-'+view).classList.add('active');
+  const titles = { demandas:'Demandas', clientes:'Clientes', equipe:'Colaboradores' };
   document.getElementById('view-title').textContent = titles[view];
   if (view==='clientes') renderClientes();
-  if (view==='equipe') { renderEquipeSelect(); renderEquipe(); openModal_equipe(); }
+  if (view==='equipe') { renderEquipeTabela(); renderEquipeListaConfig(); }
 }
 
-// ── MODAL HELPERS ──
-function openModal() {
-  renderEquipeSelect();
-  document.getElementById('modal-nova').classList.add('open');
+function openModal(id) {
+  if (id==='modal-nova') renderEquipeSelect();
+  document.getElementById(id).classList.add('open');
 }
+
 function closeModal(id) {
   document.getElementById(id).classList.remove('open');
   if (id==='modal-nova') {
@@ -769,96 +683,98 @@ function closeModal(id) {
   }
 }
 
-// ── COLABORADORES SELECT ──
-function renderEquipeSelect() {
-  const sel = document.getElementById('f-resp');
-  sel.innerHTML = '<option value="">Selecione...</option>' + colaboradores.map(c=>`<option>${c}</option>`).join('');
-}
-
-// ── SALVAR DEMANDA ──
-function salvarDemanda() {
+async function salvarDemanda() {
   const nome = document.getElementById('f-nome').value.trim();
   const tipo = document.getElementById('f-tipo').value;
   const resp = document.getElementById('f-resp').value;
-  if (!nome || !tipo || !resp) { alert('Preencha nome, tipo de serviço e responsável.'); return; }
-  demandas.unshift({
-    id: nextId++,
-    nome,
-    tel: document.getElementById('f-tel').value.trim() || '—',
-    tipo, resp,
-    obs: document.getElementById('f-obs').value.trim(),
+  if (!nome||!tipo||!resp) { alert('Preencha nome, tipo de serviço e responsável.'); return; }
+  const btn = document.getElementById('btn-salvar');
+  btn.disabled = true; btn.textContent = 'Salvando...';
+  const { data, error } = await db.from('demandas').insert([{
+    nome, tipo, resp,
+    tel: document.getElementById('f-tel').value.trim()||null,
+    obs: document.getElementById('f-obs').value.trim()||null,
     status: 'Em aberto',
     data: hoje()
-  });
-  save();
+  }]).select();
+  btn.disabled = false; btn.textContent = 'Salvar demanda';
+  if (error) { alert('Erro ao salvar: '+error.message); return; }
+  demandas.unshift(data[0]);
   closeModal('modal-nova');
   renderTable();
+  toast('Demanda cadastrada com sucesso!');
 }
 
-// ── DETALHE ──
 function openDetalhe(id) {
   detalheId = id;
   const d = demandas.find(x=>x.id===id);
   document.getElementById('d-nome-header').textContent = d.nome;
-  document.getElementById('d-tel').textContent = d.tel || '—';
-  document.getElementById('d-tipo').textContent = d.tipo;
-  document.getElementById('d-resp').textContent = d.resp;
-  document.getElementById('d-data').textContent = d.data;
+  document.getElementById('d-tel').textContent = d.tel||'—';
+  document.getElementById('d-tipo').textContent = d.tipo||'—';
+  document.getElementById('d-resp').textContent = d.resp||'—';
+  document.getElementById('d-data').textContent = d.data||'—';
   document.getElementById('d-status').value = d.status;
   const obsEl = document.getElementById('d-obs');
   const obsSection = document.getElementById('d-obs-section');
-  if (d.obs) { obsEl.textContent = d.obs; obsSection.style.display='block'; } else { obsSection.style.display='none'; }
+  if (d.obs) { obsEl.textContent=d.obs; obsSection.style.display='block'; } else { obsSection.style.display='none'; }
   document.getElementById('modal-detalhe').classList.add('open');
 }
 
-function atualizarStatus() {
+async function atualizarStatus() {
+  const novoStatus = document.getElementById('d-status').value;
+  const { error } = await db.from('demandas').update({ status: novoStatus }).eq('id', detalheId);
+  if (error) { alert('Erro ao atualizar: '+error.message); return; }
   const d = demandas.find(x=>x.id===detalheId);
-  if (d) { d.status = document.getElementById('d-status').value; save(); renderTable(); }
+  if (d) d.status = novoStatus;
+  renderTable();
+  toast('Status atualizado!');
 }
 
-function excluirDemanda() {
+async function excluirDemanda() {
   if (!confirm('Deseja excluir esta demanda?')) return;
+  const { error } = await db.from('demandas').delete().eq('id', detalheId);
+  if (error) { alert('Erro ao excluir: '+error.message); return; }
   demandas = demandas.filter(x=>x.id!==detalheId);
-  save();
   closeModal('modal-detalhe');
   renderTable();
+  toast('Demanda excluída.');
 }
 
-// ── EQUIPE CONFIG ──
-function openModal_equipe() {
-  renderEquipeListaConfig();
-  document.getElementById('modal-equipe-cfg').classList.add('open');
-}
-
-function renderEquipeListaConfig() {
-  const lista = document.getElementById('equipe-lista');
-  lista.innerHTML = colaboradores.map((c,i)=>`
-    <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 12px;background:var(--off-white);border-radius:6px;">
-      <span style="font-size:13px;">${c}</span>
-      <button onclick="removeColaborador(${i})" style="background:none;border:none;cursor:pointer;color:var(--gray-text);font-size:16px;padding:0 4px;">×</button>
-    </div>`).join('');
-}
-
-function addColaborador() {
+async function addColaborador() {
   const input = document.getElementById('novo-colaborador');
   const nome = input.value.trim();
   if (!nome) return;
-  colaboradores.push(nome);
-  save();
+  const { data, error } = await db.from('colaboradores').insert([{ nome }]).select();
+  if (error) { alert('Erro: '+error.message); return; }
+  colaboradores.push(data[0]);
   input.value = '';
   renderEquipeListaConfig();
   renderEquipeSelect();
+  toast('Colaborador adicionado!');
 }
 
-function removeColaborador(i) {
-  colaboradores.splice(i, 1);
-  save();
+async function removeColaborador(id) {
+  if (!confirm('Remover colaborador?')) return;
+  const { error } = await db.from('colaboradores').delete().eq('id', id);
+  if (error) { alert('Erro: '+error.message); return; }
+  colaboradores = colaboradores.filter(c=>c.id!==id);
   renderEquipeListaConfig();
+  renderEquipeSelect();
+  toast('Colaborador removido.');
+}
+
+async function init() {
+  const [{ data: d }, { data: c }] = await Promise.all([
+    db.from('demandas').select('*').order('created_at', { ascending: false }),
+    db.from('colaboradores').select('*').order('created_at', { ascending: true })
+  ]);
+  demandas = d || [];
+  colaboradores = c || [];
+  renderTable();
   renderEquipeSelect();
 }
 
-// ── INIT ──
-renderTable();
+init();
 </script>
 </body>
 </html>
