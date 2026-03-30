@@ -1,0 +1,864 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Justa — Gestão de Demandas</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --navy: #060A3E;
+    --navy-mid: #0D1260;
+    --navy-light: #1A2080;
+    --gold: #B8972A;
+    --gold-light: #D4AF50;
+    --gold-pale: #F0DFA0;
+    --white: #FFFFFF;
+    --off-white: #F5F4F0;
+    --gray-light: #E8E6DF;
+    --gray-mid: #C0BDB4;
+    --gray-text: #6B6860;
+    --status-open-bg: #EEF0FF;
+    --status-open-fg: #1A2080;
+    --status-progress-bg: #FFF8E6;
+    --status-progress-fg: #7A5800;
+    --status-waiting-bg: #FFF0F5;
+    --status-waiting-fg: #7A1840;
+    --status-done-bg: #EDFAF2;
+    --status-done-fg: #0A5C2A;
+    --status-cancel-bg: #F0F0EE;
+    --status-cancel-fg: #4A4845;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--off-white);
+    color: var(--navy);
+    min-height: 100vh;
+  }
+
+  /* ── SIDEBAR ── */
+  .sidebar {
+    position: fixed; top: 0; left: 0;
+    width: 220px; height: 100vh;
+    background: var(--navy);
+    display: flex; flex-direction: column;
+    z-index: 100;
+    border-right: 1px solid var(--navy-light);
+  }
+
+  .sidebar-logo {
+    padding: 28px 24px 20px;
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+  }
+
+  .logo-text {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 32px; font-weight: 700;
+    color: var(--white);
+    letter-spacing: 3px;
+    line-height: 1;
+  }
+
+  .logo-sub {
+    font-size: 9px; font-weight: 300;
+    letter-spacing: 2.5px;
+    color: var(--gold);
+    text-transform: uppercase;
+    margin-top: 4px;
+  }
+
+  .sidebar-nav {
+    flex: 1;
+    padding: 24px 0;
+  }
+
+  .nav-section {
+    font-size: 9px; font-weight: 500;
+    letter-spacing: 2px; text-transform: uppercase;
+    color: rgba(255,255,255,0.3);
+    padding: 0 24px; margin-bottom: 8px; margin-top: 20px;
+  }
+
+  .nav-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 24px;
+    font-size: 13px; font-weight: 400;
+    color: rgba(255,255,255,0.6);
+    cursor: pointer;
+    transition: all 0.15s;
+    border-left: 2px solid transparent;
+  }
+
+  .nav-item:hover { color: var(--white); background: rgba(255,255,255,0.05); }
+  .nav-item.active { color: var(--gold-light); border-left-color: var(--gold); background: rgba(184,151,42,0.08); }
+
+  .nav-icon {
+    width: 16px; height: 16px;
+    opacity: 0.7;
+    flex-shrink: 0;
+  }
+  .nav-item.active .nav-icon { opacity: 1; }
+
+  .sidebar-footer {
+    padding: 20px 24px;
+    border-top: 1px solid rgba(255,255,255,0.08);
+    font-size: 11px; color: rgba(255,255,255,0.3);
+  }
+
+  /* ── MAIN ── */
+  .main {
+    margin-left: 220px;
+    min-height: 100vh;
+    display: flex; flex-direction: column;
+  }
+
+  .topbar {
+    background: var(--white);
+    border-bottom: 1px solid var(--gray-light);
+    padding: 16px 32px;
+    display: flex; align-items: center; justify-content: space-between;
+    position: sticky; top: 0; z-index: 50;
+  }
+
+  .topbar-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 22px; font-weight: 600;
+    color: var(--navy);
+  }
+
+  .topbar-right {
+    display: flex; align-items: center; gap: 12px;
+  }
+
+  .topbar-date {
+    font-size: 12px; color: var(--gray-text);
+  }
+
+  .btn-nova {
+    background: var(--navy);
+    color: var(--white);
+    border: none; cursor: pointer;
+    padding: 9px 18px;
+    font-size: 13px; font-weight: 500;
+    font-family: 'DM Sans', sans-serif;
+    border-radius: 6px;
+    transition: all 0.15s;
+    letter-spacing: 0.3px;
+  }
+
+  .btn-nova:hover { background: var(--navy-mid); }
+
+  /* ── CONTENT ── */
+  .content { padding: 28px 32px; flex: 1; }
+
+  /* ── METRICS ── */
+  .metrics-grid {
+    display: grid; grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 14px; margin-bottom: 28px;
+  }
+
+  .metric-card {
+    background: var(--white);
+    border: 1px solid var(--gray-light);
+    border-radius: 10px;
+    padding: 18px 20px;
+    position: relative; overflow: hidden;
+  }
+
+  .metric-card::before {
+    content: '';
+    position: absolute; top: 0; left: 0;
+    width: 3px; height: 100%;
+    background: var(--gold);
+  }
+
+  .metric-label {
+    font-size: 11px; font-weight: 400;
+    color: var(--gray-text); letter-spacing: 0.5px;
+    text-transform: uppercase; margin-bottom: 8px;
+  }
+
+  .metric-value {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 36px; font-weight: 700;
+    color: var(--navy); line-height: 1;
+  }
+
+  /* ── FILTERS ── */
+  .filters-bar {
+    display: flex; gap: 6px; flex-wrap: wrap;
+    margin-bottom: 20px; align-items: center;
+  }
+
+  .filter-chip {
+    padding: 6px 14px; font-size: 12px;
+    border: 1px solid var(--gray-light);
+    border-radius: 99px; cursor: pointer;
+    background: var(--white); color: var(--gray-text);
+    font-family: 'DM Sans', sans-serif;
+    transition: all 0.15s;
+  }
+  .filter-chip:hover { border-color: var(--navy); color: var(--navy); }
+  .filter-chip.active { background: var(--navy); color: var(--white); border-color: var(--navy); }
+
+  .search-input {
+    margin-left: auto;
+    padding: 7px 14px;
+    font-size: 13px; font-family: 'DM Sans', sans-serif;
+    border: 1px solid var(--gray-light);
+    border-radius: 6px;
+    background: var(--white);
+    color: var(--navy);
+    width: 200px;
+    outline: none;
+    transition: border-color 0.15s;
+  }
+  .search-input:focus { border-color: var(--navy); }
+  .search-input::placeholder { color: var(--gray-mid); }
+
+  /* ── TABLE ── */
+  .table-wrap {
+    background: var(--white);
+    border: 1px solid var(--gray-light);
+    border-radius: 10px;
+    overflow: hidden;
+  }
+
+  table { width: 100%; border-collapse: collapse; }
+
+  thead tr {
+    background: var(--navy);
+  }
+
+  thead th {
+    padding: 12px 16px;
+    font-size: 10px; font-weight: 500;
+    text-transform: uppercase; letter-spacing: 1.5px;
+    color: rgba(255,255,255,0.6);
+    text-align: left;
+  }
+
+  tbody tr {
+    border-bottom: 1px solid var(--gray-light);
+    cursor: pointer;
+    transition: background 0.12s;
+  }
+  tbody tr:last-child { border-bottom: none; }
+  tbody tr:hover { background: var(--off-white); }
+
+  tbody td {
+    padding: 14px 16px;
+    font-size: 13px; color: var(--navy);
+    vertical-align: middle;
+  }
+
+  .td-nome { font-weight: 500; }
+  .td-sub { font-size: 11px; color: var(--gray-text); margin-top: 2px; }
+
+  .avatar {
+    width: 34px; height: 34px; border-radius: 50%;
+    display: inline-flex; align-items: center; justify-content: center;
+    font-size: 12px; font-weight: 500;
+    background: var(--navy); color: var(--gold-light);
+    flex-shrink: 0;
+  }
+
+  .td-avatar { display: flex; align-items: center; gap: 10px; }
+
+  .badge {
+    display: inline-block;
+    padding: 3px 10px; border-radius: 99px;
+    font-size: 11px; font-weight: 500; white-space: nowrap;
+  }
+  .badge-aberto     { background: var(--status-open-bg);     color: var(--status-open-fg); }
+  .badge-andamento  { background: var(--status-progress-bg); color: var(--status-progress-fg); }
+  .badge-aguardando { background: var(--status-waiting-bg);  color: var(--status-waiting-fg); }
+  .badge-concluido  { background: var(--status-done-bg);     color: var(--status-done-fg); }
+  .badge-cancelado  { background: var(--status-cancel-bg);   color: var(--status-cancel-fg); }
+
+  .empty-state {
+    text-align: center; padding: 48px 24px;
+    color: var(--gray-text); font-size: 14px;
+  }
+
+  /* ── MODAL ── */
+  .modal-overlay {
+    display: none; position: fixed;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(6,10,62,0.5);
+    z-index: 200; align-items: center; justify-content: center;
+    backdrop-filter: blur(2px);
+  }
+  .modal-overlay.open { display: flex; }
+
+  .modal-box {
+    background: var(--white);
+    border-radius: 12px;
+    width: 100%; max-width: 460px;
+    overflow: hidden;
+    box-shadow: 0 20px 60px rgba(6,10,62,0.2);
+  }
+
+  .modal-header {
+    background: var(--navy);
+    padding: 20px 24px;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+
+  .modal-header h2 {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 20px; font-weight: 600;
+    color: var(--white);
+  }
+
+  .modal-close {
+    background: none; border: none; cursor: pointer;
+    color: rgba(255,255,255,0.5); font-size: 20px; line-height: 1;
+    padding: 2px 6px;
+  }
+  .modal-close:hover { color: var(--white); }
+
+  .modal-body { padding: 24px; }
+
+  .field { margin-bottom: 16px; }
+  .field label {
+    display: block; font-size: 11px; font-weight: 500;
+    letter-spacing: 0.8px; text-transform: uppercase;
+    color: var(--gray-text); margin-bottom: 6px;
+  }
+  .field input, .field select, .field textarea {
+    width: 100%; padding: 10px 12px;
+    font-size: 13px; font-family: 'DM Sans', sans-serif;
+    border: 1px solid var(--gray-light); border-radius: 6px;
+    color: var(--navy); background: var(--white);
+    outline: none; transition: border-color 0.15s;
+  }
+  .field input:focus, .field select:focus, .field textarea:focus {
+    border-color: var(--navy);
+  }
+  .field textarea { resize: vertical; min-height: 72px; }
+  .fields-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+  .modal-footer {
+    padding: 16px 24px;
+    border-top: 1px solid var(--gray-light);
+    display: flex; gap: 10px; justify-content: flex-end;
+  }
+
+  .btn-sec {
+    padding: 9px 18px; font-size: 13px; font-family: 'DM Sans', sans-serif;
+    border: 1px solid var(--gray-light); border-radius: 6px;
+    background: transparent; color: var(--gray-text); cursor: pointer;
+    transition: all 0.15s;
+  }
+  .btn-sec:hover { border-color: var(--navy); color: var(--navy); }
+
+  .btn-prim {
+    padding: 9px 20px; font-size: 13px; font-family: 'DM Sans', sans-serif;
+    border: none; border-radius: 6px;
+    background: var(--navy); color: var(--white); cursor: pointer;
+    font-weight: 500; transition: all 0.15s;
+  }
+  .btn-prim:hover { background: var(--navy-mid); }
+
+  .btn-danger {
+    padding: 9px 18px; font-size: 13px; font-family: 'DM Sans', sans-serif;
+    border: 1px solid #E0B0B0; border-radius: 6px;
+    background: transparent; color: #B03030; cursor: pointer;
+    transition: all 0.15s;
+  }
+  .btn-danger:hover { background: #FFF0F0; }
+
+  /* ── DETAIL MODAL ── */
+  .detail-section {
+    margin-bottom: 16px; padding-bottom: 16px;
+    border-bottom: 1px solid var(--gray-light);
+  }
+  .detail-section:last-of-type { border-bottom: none; }
+
+  .detail-row {
+    display: flex; justify-content: space-between;
+    padding: 5px 0; font-size: 13px;
+  }
+  .detail-row span:first-child { color: var(--gray-text); }
+  .detail-row span:last-child { font-weight: 500; color: var(--navy); }
+
+  /* ── GOLD ACCENT ── */
+  .gold-line {
+    display: block; height: 1px;
+    background: linear-gradient(90deg, var(--gold) 0%, transparent 100%);
+    margin: 4px 0 16px;
+  }
+
+  @media (max-width: 768px) {
+    .sidebar { width: 0; overflow: hidden; }
+    .main { margin-left: 0; }
+    .metrics-grid { grid-template-columns: repeat(2, 1fr); }
+    .topbar, .content { padding: 14px 16px; }
+    .fields-row { grid-template-columns: 1fr; }
+    table thead { display: none; }
+    tbody td:first-child { padding-top: 14px; }
+    tbody td:last-child { padding-bottom: 14px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-text">JUSTA</div>
+    <div class="logo-sub">Assessoria Documental</div>
+  </div>
+  <nav class="sidebar-nav">
+    <div class="nav-section">Gestão</div>
+    <div class="nav-item active" onclick="showView('demandas')">
+      <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+        <rect x="1" y="2" width="14" height="12" rx="2"/><line x1="5" y1="6" x2="11" y2="6"/><line x1="5" y1="9" x2="9" y2="9"/>
+      </svg>
+      Demandas
+    </div>
+    <div class="nav-item" onclick="showView('clientes')">
+      <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+        <circle cx="8" cy="5" r="3"/><path d="M2 13c0-3 2.7-5 6-5s6 2 6 5"/>
+      </svg>
+      Clientes
+    </div>
+    <div class="nav-section">Equipe</div>
+    <div class="nav-item" onclick="showView('equipe')">
+      <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+        <circle cx="5" cy="5" r="2.5"/><circle cx="11" cy="5" r="2.5"/><path d="M0 13c0-2.5 2-4 5-4"/><path d="M16 13c0-2.5-2-4-5-4"/><path d="M5 13c0-2.5 1.3-4 3-4s3 1.5 3 4"/>
+      </svg>
+      Colaboradores
+    </div>
+  </nav>
+  <div class="sidebar-footer">Justa © 2026</div>
+</aside>
+
+<!-- MAIN -->
+<main class="main">
+  <div class="topbar">
+    <div class="topbar-title" id="view-title">Demandas</div>
+    <div class="topbar-right">
+      <span class="topbar-date" id="topbar-date"></span>
+      <button class="btn-nova" onclick="openModal()">+ Nova demanda</button>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <!-- DEMANDAS VIEW -->
+    <div id="view-demandas">
+      <div class="metrics-grid">
+        <div class="metric-card">
+          <div class="metric-label">Total de demandas</div>
+          <div class="metric-value" id="m-total">0</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-label">Em andamento</div>
+          <div class="metric-value" id="m-andamento">0</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-label">Aguardando doc.</div>
+          <div class="metric-value" id="m-aguardando">0</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-label">Concluídos</div>
+          <div class="metric-value" id="m-concluidos">0</div>
+        </div>
+      </div>
+
+      <div class="filters-bar">
+        <button class="filter-chip active" data-filter="todos" onclick="setFilter(this)">Todos</button>
+        <button class="filter-chip" data-filter="Em aberto" onclick="setFilter(this)">Em aberto</button>
+        <button class="filter-chip" data-filter="Em andamento" onclick="setFilter(this)">Em andamento</button>
+        <button class="filter-chip" data-filter="Aguardando doc." onclick="setFilter(this)">Aguardando doc.</button>
+        <button class="filter-chip" data-filter="Concluído" onclick="setFilter(this)">Concluído</button>
+        <button class="filter-chip" data-filter="Cancelado" onclick="setFilter(this)">Cancelado</button>
+        <input class="search-input" type="text" placeholder="Buscar cliente..." id="search-input" oninput="renderTable()" />
+      </div>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Cliente</th>
+              <th>Serviço</th>
+              <th>Responsável</th>
+              <th>Status</th>
+              <th>Data</th>
+            </tr>
+          </thead>
+          <tbody id="tabela-demandas"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- CLIENTES VIEW -->
+    <div id="view-clientes" style="display:none">
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Cliente</th><th>Contato</th><th>Demandas</th><th>Última demanda</th></tr></thead>
+          <tbody id="tabela-clientes"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- EQUIPE VIEW -->
+    <div id="view-equipe" style="display:none">
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Colaborador</th><th>Em aberto</th><th>Em andamento</th><th>Concluídos</th><th>Total</th></tr></thead>
+          <tbody id="tabela-equipe"></tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</main>
+
+<!-- MODAL NOVA DEMANDA -->
+<div class="modal-overlay" id="modal-nova">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h2>Nova demanda</h2>
+      <button class="modal-close" onclick="closeModal('modal-nova')">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="fields-row">
+        <div class="field">
+          <label>Nome do cliente *</label>
+          <input type="text" id="f-nome" placeholder="Nome completo" />
+        </div>
+        <div class="field">
+          <label>Telefone</label>
+          <input type="text" id="f-tel" placeholder="(77) 9 0000-0000" />
+        </div>
+      </div>
+      <div class="field">
+        <label>Tipo de serviço *</label>
+        <select id="f-tipo">
+          <option value="">Selecione...</option>
+          <option>Escritura / Compra e Venda</option>
+          <option>Inventário / Divórcio</option>
+          <option>Procuração / Reconhecimento de firma</option>
+          <option>Regularização de imóvel / Usucapião</option>
+          <option>Outro</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Responsável *</label>
+        <select id="f-resp">
+          <option value="">Selecione...</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Observações</label>
+        <textarea id="f-obs" placeholder="Anotações sobre a demanda..."></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-sec" onclick="closeModal('modal-nova')">Cancelar</button>
+      <button class="btn-prim" onclick="salvarDemanda()">Salvar demanda</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL DETALHE -->
+<div class="modal-overlay" id="modal-detalhe">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h2 id="d-nome-header">Detalhe</h2>
+      <button class="modal-close" onclick="closeModal('modal-detalhe')">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="detail-section">
+        <div class="detail-row"><span>Contato</span><span id="d-tel">—</span></div>
+        <div class="detail-row"><span>Serviço</span><span id="d-tipo">—</span></div>
+        <div class="detail-row"><span>Responsável</span><span id="d-resp">—</span></div>
+        <div class="detail-row"><span>Data de entrada</span><span id="d-data">—</span></div>
+      </div>
+      <div class="detail-section" id="d-obs-section" style="display:none">
+        <div class="metric-label" style="margin-bottom:6px;">Observações</div>
+        <p id="d-obs" style="font-size:13px;color:var(--navy);line-height:1.6;"></p>
+      </div>
+      <div class="field">
+        <label>Status</label>
+        <select id="d-status" onchange="atualizarStatus()">
+          <option>Em aberto</option>
+          <option>Em andamento</option>
+          <option>Aguardando doc.</option>
+          <option>Concluído</option>
+          <option>Cancelado</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-danger" onclick="excluirDemanda()">Excluir</button>
+      <button class="btn-sec" onclick="closeModal('modal-detalhe')">Fechar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL EQUIPE CONFIG -->
+<div class="modal-overlay" id="modal-equipe-cfg">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h2>Gerenciar equipe</h2>
+      <button class="modal-close" onclick="closeModal('modal-equipe-cfg')">×</button>
+    </div>
+    <div class="modal-body">
+      <p style="font-size:13px;color:var(--gray-text);margin-bottom:16px;">Adicione os nomes dos colaboradores que receberão demandas.</p>
+      <div id="equipe-lista" style="display:flex;flex-direction:column;gap:8px;margin-bottom:16px;"></div>
+      <div style="display:flex;gap:8px;">
+        <input type="text" id="novo-colaborador" placeholder="Nome do colaborador" style="flex:1;padding:9px 12px;font-size:13px;font-family:'DM Sans',sans-serif;border:1px solid var(--gray-light);border-radius:6px;outline:none;" onkeydown="if(event.key==='Enter')addColaborador()" />
+        <button class="btn-prim" onclick="addColaborador()">Adicionar</button>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-prim" onclick="closeModal('modal-equipe-cfg')">Concluir</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── STATE ──
+let demandas = JSON.parse(localStorage.getItem('justa_demandas') || '[]');
+let colaboradores = JSON.parse(localStorage.getItem('justa_colaboradores') || '["Colaborador 1","Colaborador 2","Colaborador 3"]');
+let filtroAtivo = 'todos';
+let detalheId = null;
+let nextId = parseInt(localStorage.getItem('justa_nextid') || '1');
+
+function save() {
+  localStorage.setItem('justa_demandas', JSON.stringify(demandas));
+  localStorage.setItem('justa_colaboradores', JSON.stringify(colaboradores));
+  localStorage.setItem('justa_nextid', String(nextId));
+}
+
+// ── DATE ──
+function hoje() {
+  const d = new Date();
+  return `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}`;
+}
+
+document.getElementById('topbar-date').textContent = (() => {
+  const d = new Date();
+  return d.toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: 'long', year: 'numeric' });
+})();
+
+// ── INICIAIS / AVATAR ──
+function iniciais(nome) {
+  return nome.trim().split(' ').filter(Boolean).slice(0,2).map(n=>n[0]).join('').toUpperCase();
+}
+
+// ── BADGE ──
+function badge(status) {
+  const map = {
+    'Em aberto': 'badge-aberto',
+    'Em andamento': 'badge-andamento',
+    'Aguardando doc.': 'badge-aguardando',
+    'Concluído': 'badge-concluido',
+    'Cancelado': 'badge-cancelado',
+  };
+  return `<span class="badge ${map[status]||'badge-aberto'}">${status}</span>`;
+}
+
+// ── METRICS ──
+function renderMetrics() {
+  document.getElementById('m-total').textContent = demandas.length;
+  document.getElementById('m-andamento').textContent = demandas.filter(d=>d.status==='Em andamento').length;
+  document.getElementById('m-aguardando').textContent = demandas.filter(d=>d.status==='Aguardando doc.').length;
+  document.getElementById('m-concluidos').textContent = demandas.filter(d=>d.status==='Concluído').length;
+}
+
+// ── TABLE DEMANDAS ──
+function renderTable() {
+  renderMetrics();
+  const search = (document.getElementById('search-input')?.value || '').toLowerCase();
+  let lista = filtroAtivo === 'todos' ? demandas : demandas.filter(d=>d.status===filtroAtivo);
+  if (search) lista = lista.filter(d=>d.nome.toLowerCase().includes(search));
+  const tbody = document.getElementById('tabela-demandas');
+  if (!lista.length) {
+    tbody.innerHTML = `<tr><td colspan="5"><div class="empty-state">Nenhuma demanda encontrada.</div></td></tr>`;
+    return;
+  }
+  tbody.innerHTML = lista.map(d => `
+    <tr onclick="openDetalhe(${d.id})">
+      <td><div class="td-avatar">
+        <div class="avatar">${iniciais(d.nome)}</div>
+        <div><div class="td-nome">${d.nome}</div><div class="td-sub">${d.tel||'—'}</div></div>
+      </div></td>
+      <td>${d.tipo}</td>
+      <td>${d.resp}</td>
+      <td>${badge(d.status)}</td>
+      <td style="color:var(--gray-text);font-size:12px;">${d.data}</td>
+    </tr>`).join('');
+}
+
+// ── TABLE CLIENTES ──
+function renderClientes() {
+  const map = {};
+  demandas.forEach(d=>{
+    if (!map[d.nome]) map[d.nome] = { tel: d.tel, count: 0, ultima: d.data };
+    map[d.nome].count++;
+    map[d.nome].ultima = d.data;
+  });
+  const tbody = document.getElementById('tabela-clientes');
+  const entries = Object.entries(map);
+  if (!entries.length) { tbody.innerHTML = `<tr><td colspan="4"><div class="empty-state">Nenhum cliente cadastrado.</div></td></tr>`; return; }
+  tbody.innerHTML = entries.map(([nome, info]) => `
+    <tr>
+      <td><div class="td-avatar"><div class="avatar">${iniciais(nome)}</div><div class="td-nome">${nome}</div></div></td>
+      <td style="font-size:13px;color:var(--gray-text);">${info.tel||'—'}</td>
+      <td><span class="badge badge-andamento">${info.count}</span></td>
+      <td style="font-size:12px;color:var(--gray-text);">${info.ultima}</td>
+    </tr>`).join('');
+}
+
+// ── TABLE EQUIPE ──
+function renderEquipe() {
+  const tbody = document.getElementById('tabela-equipe');
+  if (!colaboradores.length) { tbody.innerHTML = `<tr><td colspan="5"><div class="empty-state">Nenhum colaborador cadastrado.</div></td></tr>`; return; }
+  tbody.innerHTML = colaboradores.map(c => {
+    const mine = demandas.filter(d=>d.resp===c);
+    return `<tr>
+      <td><div class="td-avatar"><div class="avatar">${iniciais(c)}</div><div class="td-nome">${c}</div></div></td>
+      <td>${mine.filter(d=>d.status==='Em aberto').length}</td>
+      <td>${mine.filter(d=>d.status==='Em andamento').length}</td>
+      <td>${mine.filter(d=>d.status==='Concluído').length}</td>
+      <td><strong>${mine.length}</strong></td>
+    </tr>`;
+  }).join('');
+}
+
+// ── FILTER ──
+function setFilter(el) {
+  filtroAtivo = el.dataset.filter;
+  document.querySelectorAll('.filter-chip').forEach(b=>b.classList.remove('active'));
+  el.classList.add('active');
+  renderTable();
+}
+
+// ── VIEWS ──
+function showView(view) {
+  ['demandas','clientes','equipe'].forEach(v=>{
+    document.getElementById('view-'+v).style.display = v===view ? 'block' : 'none';
+  });
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  event.currentTarget.classList.add('active');
+  const titles = { demandas: 'Demandas', clientes: 'Clientes', equipe: 'Colaboradores' };
+  document.getElementById('view-title').textContent = titles[view];
+  if (view==='clientes') renderClientes();
+  if (view==='equipe') { renderEquipeSelect(); renderEquipe(); openModal_equipe(); }
+}
+
+// ── MODAL HELPERS ──
+function openModal() {
+  renderEquipeSelect();
+  document.getElementById('modal-nova').classList.add('open');
+}
+function closeModal(id) {
+  document.getElementById(id).classList.remove('open');
+  if (id==='modal-nova') {
+    ['f-nome','f-tel','f-obs'].forEach(x=>document.getElementById(x).value='');
+    document.getElementById('f-tipo').value='';
+    document.getElementById('f-resp').value='';
+  }
+}
+
+// ── COLABORADORES SELECT ──
+function renderEquipeSelect() {
+  const sel = document.getElementById('f-resp');
+  sel.innerHTML = '<option value="">Selecione...</option>' + colaboradores.map(c=>`<option>${c}</option>`).join('');
+}
+
+// ── SALVAR DEMANDA ──
+function salvarDemanda() {
+  const nome = document.getElementById('f-nome').value.trim();
+  const tipo = document.getElementById('f-tipo').value;
+  const resp = document.getElementById('f-resp').value;
+  if (!nome || !tipo || !resp) { alert('Preencha nome, tipo de serviço e responsável.'); return; }
+  demandas.unshift({
+    id: nextId++,
+    nome,
+    tel: document.getElementById('f-tel').value.trim() || '—',
+    tipo, resp,
+    obs: document.getElementById('f-obs').value.trim(),
+    status: 'Em aberto',
+    data: hoje()
+  });
+  save();
+  closeModal('modal-nova');
+  renderTable();
+}
+
+// ── DETALHE ──
+function openDetalhe(id) {
+  detalheId = id;
+  const d = demandas.find(x=>x.id===id);
+  document.getElementById('d-nome-header').textContent = d.nome;
+  document.getElementById('d-tel').textContent = d.tel || '—';
+  document.getElementById('d-tipo').textContent = d.tipo;
+  document.getElementById('d-resp').textContent = d.resp;
+  document.getElementById('d-data').textContent = d.data;
+  document.getElementById('d-status').value = d.status;
+  const obsEl = document.getElementById('d-obs');
+  const obsSection = document.getElementById('d-obs-section');
+  if (d.obs) { obsEl.textContent = d.obs; obsSection.style.display='block'; } else { obsSection.style.display='none'; }
+  document.getElementById('modal-detalhe').classList.add('open');
+}
+
+function atualizarStatus() {
+  const d = demandas.find(x=>x.id===detalheId);
+  if (d) { d.status = document.getElementById('d-status').value; save(); renderTable(); }
+}
+
+function excluirDemanda() {
+  if (!confirm('Deseja excluir esta demanda?')) return;
+  demandas = demandas.filter(x=>x.id!==detalheId);
+  save();
+  closeModal('modal-detalhe');
+  renderTable();
+}
+
+// ── EQUIPE CONFIG ──
+function openModal_equipe() {
+  renderEquipeListaConfig();
+  document.getElementById('modal-equipe-cfg').classList.add('open');
+}
+
+function renderEquipeListaConfig() {
+  const lista = document.getElementById('equipe-lista');
+  lista.innerHTML = colaboradores.map((c,i)=>`
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 12px;background:var(--off-white);border-radius:6px;">
+      <span style="font-size:13px;">${c}</span>
+      <button onclick="removeColaborador(${i})" style="background:none;border:none;cursor:pointer;color:var(--gray-text);font-size:16px;padding:0 4px;">×</button>
+    </div>`).join('');
+}
+
+function addColaborador() {
+  const input = document.getElementById('novo-colaborador');
+  const nome = input.value.trim();
+  if (!nome) return;
+  colaboradores.push(nome);
+  save();
+  input.value = '';
+  renderEquipeListaConfig();
+  renderEquipeSelect();
+}
+
+function removeColaborador(i) {
+  colaboradores.splice(i, 1);
+  save();
+  renderEquipeListaConfig();
+  renderEquipeSelect();
+}
+
+// ── INIT ──
+renderTable();
+</script>
+</body>
+</html>
