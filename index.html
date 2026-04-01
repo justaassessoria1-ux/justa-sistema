@@ -933,6 +933,20 @@ function fmtMoeda(v) {
   return 'R$ ' + parseFloat(v||0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
+function atualizarResumoFinanceiro() {
+  const d = demandas.find(x=>x.id===detalheId);
+  if (!d) return;
+  const saidas = d.saidas || [];
+  const valorServico = parseFloat(d.valor) || 0;
+  const totalSaidas = saidas.reduce((s,x) => s+(parseFloat(x.valor)||0), 0);
+  const lucro = valorServico - totalSaidas;
+  document.getElementById('d-valor').textContent = valorServico > 0 ? fmtMoeda(valorServico) : '—';
+  document.getElementById('d-pagamento').textContent = d.pagamento || '—';
+  document.getElementById('d-total-saidas').textContent = fmtMoeda(totalSaidas);
+  document.getElementById('d-lucro').textContent = fmtMoeda(lucro);
+  document.getElementById('d-lucro').className = 'fin-value ' + (lucro >= 0 ? 'green' : 'red');
+}
+
 async function salvarFinanceiro() {
   const d = demandas.find(x=>x.id===detalheId);
   if (!d) return;
@@ -943,7 +957,7 @@ async function salvarFinanceiro() {
   d.valor = valor; d.pagamento = pagamento; d.entrada = entrada; d.parcelas = parcelas;
   const { error } = await db.from('demandas').update({ valor, pagamento, entrada, parcelas }).eq('id', detalheId);
   if (error) { alert('Erro ao salvar: '+error.message); return; }
-  openDetalhe(detalheId);
+  atualizarResumoFinanceiro();
   toast('Dados financeiros salvos!');
 }
 
@@ -959,7 +973,15 @@ async function adicionarSaida() {
   if (error) { alert('Erro ao salvar: '+error.message); return; }
   document.getElementById('nova-saida-desc').value = '';
   document.getElementById('nova-saida-valor').value = '';
-  openDetalhe(detalheId);
+  // Atualizar lista de saídas na tela
+  const saidasLista = document.getElementById('d-saidas-lista');
+  saidasLista.innerHTML = d.saidas.map((s,i) => `
+    <div class="saida-item">
+      <span class="saida-desc">${s.desc}</span>
+      <span class="saida-valor">- ${fmtMoeda(s.valor)}</span>
+      <button class="saida-del" onclick="removerSaida(${i})">×</button>
+    </div>`).join('');
+  atualizarResumoFinanceiro();
   toast('Saída registrada!');
 }
 
@@ -969,7 +991,14 @@ async function removerSaida(idx) {
   d.saidas.splice(idx, 1);
   const { error } = await db.from('demandas').update({ saidas: JSON.stringify(d.saidas) }).eq('id', detalheId);
   if (error) { alert('Erro: '+error.message); return; }
-  openDetalhe(detalheId);
+  const saidasLista = document.getElementById('d-saidas-lista');
+  saidasLista.innerHTML = d.saidas.length ? d.saidas.map((s,i) => `
+    <div class="saida-item">
+      <span class="saida-desc">${s.desc}</span>
+      <span class="saida-valor">- ${fmtMoeda(s.valor)}</span>
+      <button class="saida-del" onclick="removerSaida(${i})">×</button>
+    </div>`).join('') : '<div style="font-size:12px;color:var(--color-text-tertiary);padding:6px 0;">Nenhuma saída registrada.</div>';
+  atualizarResumoFinanceiro();
   toast('Saída removida.');
 }
 
