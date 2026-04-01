@@ -234,7 +234,26 @@
   .badge-concluido  { background: var(--status-done-bg);     color: var(--status-done-fg); }
   .badge-cancelado  { background: var(--status-cancel-bg);   color: var(--status-cancel-fg); }
 
-  .empty-state {
+  
+  .fin-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px; }
+  .fin-card { background: var(--color-background-secondary); border-radius: var(--border-radius-md); padding: 12px 14px; }
+  .fin-label { font-size: 11px; color: var(--color-text-secondary); text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 4px; }
+  .fin-value { font-size: 20px; font-weight: 500; color: var(--color-text-primary); }
+  .fin-value.green { color: #27500A; }
+  .fin-value.red { color: #791F1F; }
+  .saida-item { display: flex; align-items: center; gap: 8px; padding: 7px 0; border-bottom: 0.5px solid var(--color-border-tertiary); font-size: 13px; }
+  .saida-item:last-child { border-bottom: none; }
+  .saida-desc { flex: 1; color: var(--color-text-primary); }
+  .saida-valor { font-weight: 500; color: #791F1F; }
+  .saida-del { background: none; border: none; cursor: pointer; color: var(--color-text-tertiary); font-size: 15px; padding: 0 4px; }
+  .saida-del:hover { color: #791F1F; }
+  .hist-item { display: flex; gap: 8px; padding: 7px 0; border-bottom: 0.5px solid var(--color-border-tertiary); font-size: 12px; }
+  .hist-item:last-child { border-bottom: none; }
+  .hist-de { color: var(--color-text-secondary); }
+  .hist-para { color: var(--color-text-primary); font-weight: 500; }
+  .hist-data { color: var(--color-text-tertiary); margin-left: auto; }
+  .parcela-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.empty-state {
     text-align: center; padding: 48px 24px;
     color: var(--gray-text); font-size: 14px;
   }
@@ -484,6 +503,28 @@
         <label>Observações</label>
         <textarea id="f-obs" placeholder="Anotações sobre a demanda..."></textarea>
       </div>
+      <div class="field">
+        <label>Valor do serviço (R$)</label>
+        <input type="number" id="f-valor" placeholder="0,00" min="0" step="0.01" />
+      </div>
+      <div class="field">
+        <label>Forma de pagamento</label>
+        <select id="f-pagamento" onchange="toggleParcelas()">
+          <option value="">Selecione...</option>
+          <option>Dinheiro</option>
+          <option>PIX</option>
+          <option>Cartão de crédito</option>
+          <option>Boleto</option>
+          <option>Transferência</option>
+          <option>A prazo</option>
+        </select>
+      </div>
+      <div id="campo-parcelas" style="display:none;">
+        <div class="parcela-row">
+          <div class="field"><label>Entrada (R$)</label><input type="number" id="f-entrada" placeholder="0,00" min="0" step="0.01" /></div>
+          <div class="field"><label>Nº de parcelas</label><input type="number" id="f-parcelas" placeholder="Ex: 3" min="1" /></div>
+        </div>
+      </div>
     </div>
     <div class="modal-footer">
       <button class="btn-sec" onclick="closeModal('modal-nova')">Cancelar</button>
@@ -520,6 +561,39 @@
           <option>Cancelado</option>
         </select>
       </div>
+    </div>
+      <!-- FINANCEIRO -->
+      <div class="detail-section">
+        <div class="metric-label" style="margin-bottom:8px;">Financeiro</div>
+        <div class="fin-grid">
+          <div class="fin-card"><div class="fin-label">Valor do serviço</div><div class="fin-value" id="d-valor">—</div></div>
+          <div class="fin-card"><div class="fin-label">Pagamento</div><div class="fin-value" id="d-pagamento">—</div></div>
+        </div>
+        <div id="d-parcelas-info" style="display:none;margin-bottom:10px;font-size:12px;color:var(--color-text-secondary);"></div>
+        <div class="fin-grid">
+          <div class="fin-card"><div class="fin-label">Total saídas</div><div class="fin-value red" id="d-total-saidas">R$ 0,00</div></div>
+          <div class="fin-card"><div class="fin-label">Lucro líquido</div><div class="fin-value green" id="d-lucro">R$ 0,00</div></div>
+        </div>
+        <div class="metric-label" style="margin:10px 0 6px;">Saídas</div>
+        <div id="d-saidas-lista"></div>
+        <div style="display:flex;gap:8px;margin-top:8px;">
+          <input type="text" id="nova-saida-desc" placeholder="Descrição (ex: Imposto)" style="flex:1;padding:7px 10px;font-size:12px;font-family:inherit;border:0.5px solid var(--color-border-secondary);border-radius:var(--border-radius-md);background:var(--color-background-primary);color:var(--color-text-primary);outline:none;" />
+          <input type="number" id="nova-saida-valor" placeholder="R$" style="width:90px;padding:7px 10px;font-size:12px;font-family:inherit;border:0.5px solid var(--color-border-secondary);border-radius:var(--border-radius-md);background:var(--color-background-primary);color:var(--color-text-primary);outline:none;" />
+          <button onclick="adicionarSaida()" style="padding:7px 12px;font-size:12px;border:0.5px solid var(--color-border-secondary);border-radius:var(--border-radius-md);background:var(--color-background-primary);cursor:pointer;color:var(--color-text-primary);">+ Saída</button>
+        </div>
+      </div>
+
+      <!-- TRANSFERÊNCIA -->
+      <div class="detail-section">
+        <div class="metric-label" style="margin-bottom:8px;">Transferir demanda</div>
+        <div style="display:flex;gap:8px;margin-bottom:10px;">
+          <select id="d-transferir-para" style="flex:1;padding:7px 10px;font-size:12px;font-family:inherit;border:0.5px solid var(--color-border-secondary);border-radius:var(--border-radius-md);background:var(--color-background-primary);color:var(--color-text-primary);outline:none;"></select>
+          <button onclick="transferirDemanda()" style="padding:7px 14px;font-size:12px;font-weight:500;border:none;border-radius:var(--border-radius-md);background:var(--color-text-primary);color:var(--color-background-primary);cursor:pointer;">Passar</button>
+        </div>
+        <div class="metric-label" style="margin-bottom:6px;">Histórico de repasses</div>
+        <div id="d-historico-repasses"></div>
+      </div>
+
     </div>
     <div class="modal-footer">
       <button class="btn-danger" onclick="excluirDemanda()">Excluir</button>
@@ -667,6 +741,15 @@ function showView(view) {
   document.getElementById('view-title').textContent = titles[view];
   if (view==='clientes') renderClientes();
   if (view==='equipe') { renderEquipeTabela(); renderEquipeListaConfig(); }
+}
+
+function toggleParcelas() {
+  const pag = document.getElementById('f-pagamento').value;
+  document.getElementById('campo-parcelas').style.display = pag === 'A prazo' ? 'block' : 'none';
+}
+
+function fmtMoeda(v) {
+  return 'R$ ' + parseFloat(v||0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
 function openModal(id) {
