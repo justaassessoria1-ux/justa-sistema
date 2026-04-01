@@ -831,9 +831,10 @@ function openDetalhe(id) {
   // Financeiro - resumo
   const saidas = d.saidas ? (typeof d.saidas === 'string' ? JSON.parse(d.saidas) : d.saidas) : [];
   d.saidas = saidas;
-  const totalSaidas = saidas.reduce((s,x) => s+(x.valor||0), 0);
-  const lucro = (d.valor||0) - totalSaidas;
-  document.getElementById('d-valor').textContent = d.valor ? fmtMoeda(d.valor) : '—';
+  const valorServico = parseFloat(d.valor) || 0;
+  const totalSaidas = saidas.reduce((s,x) => s+(parseFloat(x.valor)||0), 0);
+  const lucro = valorServico - totalSaidas;
+  document.getElementById('d-valor').textContent = valorServico > 0 ? fmtMoeda(valorServico) : '—';
   document.getElementById('d-pagamento').textContent = d.pagamento || '—';
   document.getElementById('d-total-saidas').textContent = fmtMoeda(totalSaidas);
   document.getElementById('d-lucro').textContent = fmtMoeda(lucro);
