@@ -253,6 +253,66 @@
   .hist-para { color: var(--color-text-primary); font-weight: 500; }
   .hist-data { color: var(--color-text-tertiary); margin-left: auto; }
   .parcela-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+  /* TELA DE LOGIN */
+  .login-screen {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: var(--navy); z-index: 999;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    padding: 24px;
+  }
+  .login-logo { font-family: 'Cormorant Garamond', serif; font-size: 48px; font-weight: 700; color: var(--white); letter-spacing: 6px; margin-bottom: 4px; }
+  .login-sub { font-size: 11px; color: var(--gold); letter-spacing: 3px; text-transform: uppercase; margin-bottom: 48px; }
+  .login-title { font-size: 15px; color: rgba(255,255,255,0.6); margin-bottom: 24px; letter-spacing: 0.5px; }
+  .login-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; width: 100%; max-width: 480px; }
+  .login-btn {
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 10px; padding: 20px 16px;
+    cursor: pointer; transition: all 0.2s;
+    display: flex; flex-direction: column; align-items: center; gap: 10px;
+    font-family: 'DM Sans', sans-serif;
+  }
+  .login-btn:hover { background: rgba(184,151,42,0.15); border-color: var(--gold); }
+  .login-avatar {
+    width: 48px; height: 48px; border-radius: 50%;
+    background: rgba(184,151,42,0.2); border: 2px solid var(--gold);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px; font-weight: 500; color: var(--gold);
+    font-family: 'Cormorant Garamond', serif;
+  }
+  .login-nome { font-size: 14px; font-weight: 500; color: var(--white); }
+  .login-footer { margin-top: 40px; font-size: 11px; color: rgba(255,255,255,0.25); letter-spacing: 1px; }
+
+  /* BANNER DO USUÁRIO LOGADO */
+  .user-banner {
+    background: rgba(184,151,42,0.1);
+    border-bottom: 1px solid rgba(184,151,42,0.2);
+    padding: 8px 32px;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .user-banner-info { display: flex; align-items: center; gap: 10px; font-size: 13px; color: var(--navy); }
+  .user-banner-avatar { width: 28px; height: 28px; border-radius: 50%; background: var(--navy); color: var(--gold-light); display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 500; font-family: 'Cormorant Garamond', serif; }
+  .user-banner-sair { font-size: 12px; color: var(--gray-text); cursor: pointer; border: none; background: none; font-family: 'DM Sans', sans-serif; padding: 4px 8px; border-radius: 4px; }
+  .user-banner-sair:hover { background: var(--gray-light); }
+
+  /* MINHAS DEMANDAS */
+  .minha-section { margin-bottom: 24px; }
+  .minha-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+  .minha-title { font-family: 'Cormorant Garamond', serif; font-size: 18px; font-weight: 600; color: var(--navy); }
+  .minha-count { font-size: 12px; color: var(--gray-text); }
+  .minha-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 10px; }
+  .minha-card {
+    background: var(--white); border: 1px solid var(--gray-light);
+    border-left: 3px solid var(--gold);
+    border-radius: 8px; padding: 14px 16px; cursor: pointer;
+    transition: all 0.15s;
+  }
+  .minha-card:hover { border-color: var(--navy); border-left-color: var(--navy); box-shadow: 0 2px 8px rgba(6,10,62,0.08); }
+  .minha-card-nome { font-size: 14px; font-weight: 500; color: var(--navy); margin-bottom: 4px; }
+  .minha-card-tipo { font-size: 12px; color: var(--gray-text); margin-bottom: 8px; }
+  .minha-card-bottom { display: flex; align-items: center; justify-content: space-between; }
+  .minha-card-data { font-size: 11px; color: var(--gray-text); }
 .empty-state {
     text-align: center; padding: 48px 24px;
     color: var(--gray-text); font-size: 14px;
@@ -380,6 +440,15 @@
 </head>
 <body>
 
+<!-- TELA DE LOGIN -->
+<div class="login-screen" id="login-screen">
+  <div class="login-logo">JUSTA</div>
+  <div class="login-sub">Assessoria Documental</div>
+  <div class="login-title">Quem é você?</div>
+  <div class="login-grid" id="login-grid"></div>
+  <div class="login-footer">JUSTA © 2026</div>
+</div>
+
 <aside class="sidebar">
   <div class="sidebar-logo">
     <div class="logo-text">JUSTA</div>
@@ -421,9 +490,28 @@
     </div>
   </div>
 
-  <div class="content">
+  <!-- BANNER USUÁRIO -->
+<div class="user-banner" id="user-banner" style="display:none;">
+  <div class="user-banner-info">
+    <div class="user-banner-avatar" id="banner-avatar"></div>
+    <span>Olá, <strong id="banner-nome"></strong>! Suas demandas estão em destaque.</span>
+  </div>
+  <button class="user-banner-sair" onclick="sair()">Trocar usuário</button>
+</div>
+
+<div class="content">
 
     <div id="view-demandas">
+      <!-- MINHAS DEMANDAS -->
+      <div class="minha-section" id="minhas-demandas-section" style="display:none;">
+        <div class="minha-header">
+          <div class="minha-title">Minhas demandas</div>
+          <div class="minha-count" id="minhas-count"></div>
+        </div>
+        <div class="minha-grid" id="minhas-grid"></div>
+        <div style="height:1px;background:var(--gray-light);margin:20px 0 16px;"></div>
+        <div style="font-size:13px;font-weight:500;color:var(--navy);margin-bottom:12px;">Todas as demandas</div>
+      </div>
       <div class="metrics-grid">
         <div class="metric-card"><div class="metric-label">Total de demandas</div><div class="metric-value" id="m-total">—</div></div>
         <div class="metric-card"><div class="metric-label">Em andamento</div><div class="metric-value" id="m-andamento">—</div></div>
@@ -1017,6 +1105,84 @@ async function transferirDemanda() {
   toast('Demanda transferida para ' + para + '!');
 }
 
+// ── LOGIN ──
+let usuarioAtual = null;
+
+function iniciarLogin() {
+  const salvo = localStorage.getItem('justa_usuario');
+  if (salvo) {
+    usuarioAtual = salvo;
+    entrarSistema();
+  } else {
+    renderLoginGrid();
+  }
+}
+
+function renderLoginGrid() {
+  const grid = document.getElementById('login-grid');
+  const lista = colaboradores.length ? colaboradores.map(c => typeof c === 'object' ? c.nome : c) : [];
+  if (!lista.length) {
+    grid.innerHTML = '<div style="color:rgba(255,255,255,0.5);font-size:13px;text-align:center;grid-column:1/-1;">Nenhum colaborador cadastrado ainda.<br>Entre como administrador para começar.</div>';
+  }
+  // Sempre incluir opção de admin
+  const todos = [...new Set([...lista])];
+  grid.innerHTML = todos.map(nome => `
+    <div class="login-btn" onclick="loginComo('${nome}')">
+      <div class="login-avatar">${iniciais(nome)}</div>
+      <div class="login-nome">${nome}</div>
+    </div>`).join('') + `
+    <div class="login-btn" onclick="loginComo('admin')" style="border-color:rgba(184,151,42,0.3);">
+      <div class="login-avatar" style="background:rgba(184,151,42,0.3);border-color:var(--gold-light);">AD</div>
+      <div class="login-nome" style="color:var(--gold-light);">Administrador</div>
+    </div>`;
+}
+
+function loginComo(nome) {
+  usuarioAtual = nome;
+  localStorage.setItem('justa_usuario', nome);
+  entrarSistema();
+}
+
+function entrarSistema() {
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('user-banner').style.display = 'flex';
+  document.getElementById('banner-nome').textContent = usuarioAtual === 'admin' ? 'Administrador' : usuarioAtual;
+  document.getElementById('banner-avatar').textContent = iniciais(usuarioAtual === 'admin' ? 'AD' : usuarioAtual);
+  renderMinhasDemandas();
+  renderTable();
+}
+
+function sair() {
+  usuarioAtual = null;
+  localStorage.removeItem('justa_usuario');
+  document.getElementById('login-screen').style.display = 'flex';
+  document.getElementById('user-banner').style.display = 'none';
+  document.getElementById('minhas-demandas-section').style.display = 'none';
+  renderLoginGrid();
+}
+
+function renderMinhasDemandas() {
+  const section = document.getElementById('minhas-demandas-section');
+  if (!usuarioAtual || usuarioAtual === 'admin') { section.style.display = 'none'; return; }
+  const minhas = demandas.filter(d => d.resp === usuarioAtual && d.status !== 'Concluído' && d.status !== 'Cancelado');
+  section.style.display = 'block';
+  document.getElementById('minhas-count').textContent = minhas.length + ' ativas';
+  const grid = document.getElementById('minhas-grid');
+  if (!minhas.length) {
+    grid.innerHTML = '<div style="font-size:13px;color:var(--gray-text);padding:12px 0;">Nenhuma demanda ativa para você no momento.</div>';
+    return;
+  }
+  grid.innerHTML = minhas.map(d => `
+    <div class="minha-card" onclick="openDetalhe(${d.id})">
+      <div class="minha-card-nome">${d.nome}</div>
+      <div class="minha-card-tipo">${d.tipo||'—'}</div>
+      <div class="minha-card-bottom">
+        ${badge(d.status)}
+        <span class="minha-card-data">${d.data||'—'}</span>
+      </div>
+    </div>`).join('');
+}
+
 async function init() {
   const [{ data: d }, { data: c }] = await Promise.all([
     db.from('demandas').select('*').order('created_at', { ascending: false }),
@@ -1026,6 +1192,7 @@ async function init() {
   colaboradores = c || [];
   renderTable();
   renderEquipeSelect();
+  iniciarLogin();
 }
 
 init();
