@@ -1266,6 +1266,101 @@ function renderMinhasDemandas() {
     </div>`).join('');
 }
 
+
+// ── TABELA DE PREÇOS ──
+let precos = JSON.parse(localStorage.getItem('justa_precos') || '[]');
+let nextPrecoId = parseInt(localStorage.getItem('justa_precos_nextid') || '1');
+
+function savePrecos() {
+  localStorage.setItem('justa_precos', JSON.stringify(precos));
+  localStorage.setItem('justa_precos_nextid', String(nextPrecoId));
+}
+
+function fmtMoeda(v) {
+  return 'R$ ' + parseFloat(v||0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+function renderPrecos() {
+  const tbody = document.getElementById('tabela-precos');
+  if (!tbody) return;
+  if (!precos.length) {
+    tbody.innerHTML = '<tr><td colspan="4"><div class="empty-state">Nenhum serviço cadastrado.</div></td></tr>';
+    return;
+  }
+  tbody.innerHTML = precos.map(p => `
+    <tr>
+      <td style="font-weight:500;">${p.nome}</td>
+      <td style="color:#27500A;font-weight:500;">${fmtMoeda(p.valor)}</td>
+      <td style="font-size:12px;color:var(--gray-text);">${p.obs||'—'}</td>
+      <td><button onclick="deletarPreco(${p.id})" style="background:none;border:none;cursor:pointer;color:var(--gray-text);font-size:15px;padding:2px 6px;">×</button></td>
+    </tr>`).join('');
+  const dl = document.getElementById('lista-servicos');
+  if (dl) dl.innerHTML = precos.map(p => `<option value="${p.nome}">`).join('');
+}
+
+function salvarPreco() {
+  const nome = document.getElementById('fp-nome').value.trim();
+  const valor = parseFloat(document.getElementById('fp-valor').value);
+  const obsEl = document.getElementById('fp-obs');
+  const obs = obsEl ? obsEl.value.trim() : '';
+  if (!nome || !valor) { alert('Preencha o nome e o valor do serviço.'); return; }
+  precos.push({ id: nextPrecoId++, nome, valor, obs });
+  savePrecos();
+  renderPrecos();
+  closeModal('modal-preco');
+  document.getElementById('fp-nome').value = '';
+  document.getElementById('fp-valor').value = '';
+  if (obsEl) obsEl.value = '';
+  toast('Serviço cadastrado na tabela!');
+}
+
+function deletarPreco(id) {
+  if (!confirm('Remover este serviço da tabela?')) return;
+  precos = precos.filter(p => p.id !== id);
+  savePrecos();
+  renderPrecos();
+  toast('Serviço removido.');
+}
+
+function sugerirValor() {
+  const tipo = (document.getElementById('f-tipo').value || '').trim();
+  const preco = precos.find(p => p.nome.toLowerCase() === tipo.toLowerCase());
+  const sugeridoEl = document.getElementById('f-valor-sugerido');
+  if (preco) {
+    if (sugeridoEl) sugeridoEl.textContent = fmtMoeda(preco.valor);
+    const fValor = document.getElementById('f-valor');
+    if (fValor && !fValor.value) fValor.value = preco.valor;
+  } else {
+    if (sugeridoEl) sugeridoEl.textContent = '—';
+  }
+}
+
+// ── EDITAR CLIENTE ──
+function abrirEdicaoCliente() {
+  const d = demandas.find(x=>x.id===detalheId);
+  if (!d) return;
+  document.getElementById('ec-nome').value = d.nome || '';
+  document.getElementById('ec-tel').value = d.tel || d.contato || '';
+  document.getElementById('ec-tipo').value = d.tipo || '';
+  document.getElementById('modal-editar-cliente').classList.add('open');
+}
+
+async function salvarEdicaoCliente() {
+  const d = demandas.find(x=>x.id===detalheId);
+  if (!d) return;
+  const nome = document.getElementById('ec-nome').value.trim();
+  const tel = document.getElementById('ec-tel').value.trim();
+  const tipo = document.getElementById('ec-tipo').value.trim();
+  if (!nome) { alert('Nome é obrigatório.'); return; }
+  const { error } = await db.from('demandas').update({ nome, tel, tipo }).eq('id', detalheId);
+  if (error) { alert('Erro: '+error.message); return; }
+  d.nome = nome; d.tel = tel; d.contato = tel; d.tipo = tipo;
+  closeModal('modal-editar-cliente');
+  openDetalhe(detalheId);
+  renderTable();
+  toast('Cliente atualizado!');
+}
+
 async function init() {
   const [{ data: d }, { data: c }] = await Promise.all([
     db.from('demandas').select('*').order('created_at', { ascending: false }),
