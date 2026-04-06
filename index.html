@@ -477,6 +477,13 @@
       </svg>
       Colaboradores
     </div>
+    <div class="nav-item" id="nav-precos" onclick="showView('precos')">
+      <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+        <path d="M1 4h14M1 8h14M1 12h8"/><circle cx="13" cy="12" r="2.5"/>
+        <line x1="13" y1="10" x2="13" y2="8"/><line x1="13" y1="14" x2="13" y2="15"/>
+      </svg>
+      Tabela de preços
+    </div>
   </nav>
   <div class="sidebar-footer">Justa © 2026</div>
 </aside>
@@ -562,6 +569,19 @@
       </div>
     </div>
 
+    <!-- TABELA DE PREÇOS -->
+    <div id="view-precos" style="display:none">
+      <div style="display:flex;justify-content:flex-end;margin-bottom:16px;">
+        <button class="btn-nova" onclick="openModal('modal-preco')">+ Novo serviço</button>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Serviço</th><th>Valor padrão</th><th>Observação</th><th></th></tr></thead>
+          <tbody id="tabela-precos"></tbody>
+        </table>
+      </div>
+    </div>
+
   </div>
 </main>
 
@@ -579,26 +599,23 @@
       </div>
       <div class="field">
         <label>Tipo de serviço *</label>
-        <select id="f-tipo">
-          <option value="">Selecione...</option>
-          <option>Escritura / Compra e Venda</option>
-          <option>Inventário / Divórcio</option>
-          <option>Procuração / Reconhecimento de firma</option>
-          <option>Regularização de imóvel / Usucapião</option>
-          <option>Outro</option>
-        </select>
+        <input type="text" id="f-tipo" placeholder="Ex: Escritura, Inventário, Procuração..." list="lista-servicos" oninput="sugerirValor()" />
+        <datalist id="lista-servicos" id="lista-servicos-datalist"></datalist>
       </div>
       <div class="field">
         <label>Responsável *</label>
         <select id="f-resp"><option value="">Selecione...</option></select>
       </div>
       <div class="field">
-        <label>Observações</label>
-        <textarea id="f-obs" placeholder="Anotações sobre a demanda..."></textarea>
+        <label>Valor do serviço (R$)</label>
+        <div style="display:flex;gap:8px;align-items:center;">
+          <input type="number" id="f-valor" placeholder="0,00" min="0" step="0.01" style="flex:1;" />
+          <span style="font-size:11px;color:var(--gray-text);white-space:nowrap;">Preço da tabela: <span id="f-valor-sugerido" style="color:var(--navy);font-weight:500;">—</span></span>
+        </div>
       </div>
       <div class="field">
-        <label>Valor do serviço (R$)</label>
-        <input type="number" id="f-valor" placeholder="0,00" min="0" step="0.01" />
+        <label>Observações</label>
+        <textarea id="f-obs" placeholder="Anotações sobre a demanda..."></textarea>
       </div>
       <div class="field">
         <label>Forma de pagamento</label>
@@ -701,18 +718,64 @@
       <!-- TRANSFERÊNCIA -->
       <div class="detail-section">
         <div class="metric-label" style="margin-bottom:8px;">Transferir demanda</div>
-        <div style="display:flex;gap:8px;margin-bottom:10px;">
+        <div style="display:flex;gap:8px;margin-bottom:8px;">
           <select id="d-transferir-para" style="flex:1;padding:7px 10px;font-size:12px;font-family:inherit;border:0.5px solid var(--color-border-secondary);border-radius:var(--border-radius-md);background:var(--color-background-primary);color:var(--color-text-primary);outline:none;"></select>
-          <button onclick="transferirDemanda()" style="padding:7px 14px;font-size:12px;font-weight:500;border:none;border-radius:var(--border-radius-md);background:var(--color-text-primary);color:var(--color-background-primary);cursor:pointer;">Passar</button>
+          <button onclick="transferirDemanda()" style="padding:7px 14px;font-size:12px;font-weight:500;border:none;border-radius:var(--border-radius-md);background:var(--navy);color:#fff;cursor:pointer;">Passar</button>
+        </div>
+        <div class="field" style="margin-bottom:10px;">
+          <label style="font-size:10px;color:var(--gray-text);letter-spacing:0.8px;text-transform:uppercase;display:block;margin-bottom:4px;">Motivo da transferência</label>
+          <textarea id="d-obs-transferencia" placeholder="Explique o motivo do repasse..." style="width:100%;padding:8px 10px;font-size:12px;font-family:inherit;border:0.5px solid var(--color-border-secondary);border-radius:var(--border-radius-md);background:var(--color-background-primary);color:var(--color-text-primary);outline:none;resize:vertical;min-height:56px;"></textarea>
         </div>
         <div class="metric-label" style="margin-bottom:6px;">Histórico de repasses</div>
         <div id="d-historico-repasses"></div>
+      </div>
+      <!-- EDITAR CLIENTE -->
+      <div class="detail-section" style="text-align:center;">
+        <button onclick="abrirEdicaoCliente()" style="width:100%;padding:9px;font-size:13px;font-weight:500;font-family:inherit;border:0.5px solid var(--color-border-secondary);border-radius:var(--border-radius-md);background:transparent;cursor:pointer;color:var(--color-text-primary);">✏️ Editar dados do cliente</button>
       </div>
 
     </div>
     <div class="modal-footer">
       <button class="btn-danger" onclick="excluirDemanda()">Excluir</button>
       <button class="btn-sec" onclick="closeModal('modal-detalhe')">Fechar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL PREÇO -->
+<div class="modal-overlay" id="modal-preco">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h2>Novo serviço</h2>
+      <button class="modal-close" onclick="closeModal('modal-preco')">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="field"><label>Nome do serviço *</label><input type="text" id="fp-nome" placeholder="Ex: Escritura de Compra e Venda" /></div>
+      <div class="field"><label>Valor padrão (R$) *</label><input type="number" id="fp-valor" placeholder="0,00" min="0" step="0.01" /></div>
+      <div class="field"><label>Observação</label><input type="text" id="fp-obs" placeholder="Informação adicional (opcional)" /></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-sec" onclick="closeModal('modal-preco')">Cancelar</button>
+      <button class="btn-prim" onclick="salvarPreco()">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL EDITAR CLIENTE -->
+<div class="modal-overlay" id="modal-editar-cliente">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h2>Editar cliente</h2>
+      <button class="modal-close" onclick="closeModal('modal-editar-cliente')">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="field"><label>Nome do cliente *</label><input type="text" id="ec-nome" placeholder="Nome completo" /></div>
+      <div class="field"><label>Telefone</label><input type="text" id="ec-tel" placeholder="(00) 9 0000-0000" /></div>
+      <div class="field"><label>Tipo de serviço</label><input type="text" id="ec-tipo" placeholder="Ex: Escritura, Inventário..." /></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-sec" onclick="closeModal('modal-editar-cliente')">Cancelar</button>
+      <button class="btn-prim" onclick="salvarEdicaoCliente()">Salvar</button>
     </div>
   </div>
 </div>
@@ -849,13 +912,14 @@ function setFilter(el) {
 }
 
 function showView(view) {
-  ['demandas','clientes','equipe'].forEach(v=>document.getElementById('view-'+v).style.display=v===view?'block':'none');
-  ['demandas','clientes','equipe'].forEach(v=>document.getElementById('nav-'+v).classList.remove('active'));
+  ['demandas','clientes','equipe','precos'].forEach(v=>document.getElementById('view-'+v).style.display=v===view?'block':'none');
+  ['demandas','clientes','equipe','precos'].forEach(v=>document.getElementById('nav-'+v).classList.remove('active'));
   document.getElementById('nav-'+view).classList.add('active');
-  const titles = { demandas:'Demandas', clientes:'Clientes', equipe:'Colaboradores' };
+  const titles = { demandas:'Demandas', clientes:'Clientes', equipe:'Colaboradores', precos:'Tabela de preços' };
   document.getElementById('view-title').textContent = titles[view];
   if (view==='clientes') renderClientes();
   if (view==='equipe') { renderEquipeTabela(); renderEquipeListaConfig(); }
+  if (view==='precos') renderPrecos();
 }
 
 function toggleParcelas() {
@@ -875,9 +939,12 @@ function openModal(id) {
 function closeModal(id) {
   document.getElementById(id).classList.remove('open');
   if (id==='modal-nova') {
-    ['f-nome','f-tel','f-obs'].forEach(x=>document.getElementById(x).value='');
+    ['f-nome','f-tel','f-obs','f-valor','f-entrada','f-parcelas'].forEach(x=>{ const el=document.getElementById(x); if(el) el.value=''; });
     document.getElementById('f-tipo').value='';
     document.getElementById('f-resp').value='';
+    const fpag = document.getElementById('f-pagamento'); if(fpag) fpag.value='';
+    const sugerido = document.getElementById('f-valor-sugerido'); if(sugerido) sugerido.textContent='—';
+    const campoParcelas = document.getElementById('campo-parcelas'); if(campoParcelas) campoParcelas.style.display='none';
   }
 }
 
@@ -888,10 +955,20 @@ async function salvarDemanda() {
   if (!nome||!tipo||!resp) { alert('Preencha nome, tipo de serviço e responsável.'); return; }
   const btn = document.getElementById('btn-salvar');
   btn.disabled = true; btn.textContent = 'Salvando...';
+  const valor = parseFloat(document.getElementById('f-valor').value) || 0;
+  const pagamento = document.getElementById('f-pagamento').value || null;
+  const entrada = parseFloat(document.getElementById('f-entrada').value) || 0;
+  const parcelas = parseInt(document.getElementById('f-parcelas').value) || 0;
+  const obs = document.getElementById('f-obs').value.trim() || null;
+  const contato = document.getElementById('f-tel').value.trim() || null;
   const { data, error } = await db.from('demandas').insert([{
     nome, tipo, resp,
-    tel: document.getElementById('f-tel').value.trim()||null,
-    obs: document.getElementById('f-obs').value.trim()||null,
+    tel: contato,
+    obs,
+    valor,
+    pagamento,
+    entrada,
+    parcelas,
     status: 'Em aberto',
     data: hoje()
   }]).select();
@@ -900,6 +977,7 @@ async function salvarDemanda() {
   demandas.unshift(data[0]);
   closeModal('modal-nova');
   renderTable();
+  renderMinhasDemandas();
   toast('Demanda cadastrada com sucesso!');
 }
 
@@ -963,11 +1041,14 @@ function openDetalhe(id) {
   d.repasses = repasses;
   const histEl = document.getElementById('d-historico-repasses');
   histEl.innerHTML = repasses.length ? repasses.map(r =>
-    `<div class="hist-item">
-      <span class="hist-de">${r.de}</span>
-      <span style="color:var(--color-text-tertiary);margin:0 4px;">→</span>
-      <span class="hist-para">${r.para}</span>
-      <span class="hist-data">${r.data}</span>
+    `<div class="hist-item" style="flex-direction:column;gap:2px;">
+      <div style="display:flex;align-items:center;gap:6px;">
+        <span class="hist-de">${r.de}</span>
+        <span style="color:var(--color-text-tertiary);">→</span>
+        <span class="hist-para">${r.para}</span>
+        <span class="hist-data">${r.data}</span>
+      </div>
+      ${r.motivo ? `<div style="font-size:11px;color:var(--color-text-secondary);padding-left:2px;font-style:italic;">"${r.motivo}"</div>` : ''}
     </div>`).join('') : '<div style="font-size:12px;color:var(--color-text-tertiary);">Nenhum repasse registrado.</div>';
 
   document.getElementById('modal-detalhe').classList.add('open');
@@ -1093,13 +1174,15 @@ async function removerSaida(idx) {
 async function transferirDemanda() {
   const para = document.getElementById('d-transferir-para').value;
   if (!para) { alert('Selecione o colaborador.'); return; }
+  const motivo = document.getElementById('d-obs-transferencia').value.trim();
   const d = demandas.find(x=>x.id===detalheId);
   if (!d) return;
   if (!d.repasses) d.repasses = [];
-  d.repasses.push({ de: d.resp, para, data: hoje() });
+  d.repasses.push({ de: d.resp, para, motivo: motivo || null, data: hoje() });
   d.resp = para;
   const { error } = await db.from('demandas').update({ resp: para, repasses: JSON.stringify(d.repasses) }).eq('id', detalheId);
   if (error) { alert('Erro: '+error.message); return; }
+  document.getElementById('d-obs-transferencia').value = '';
   openDetalhe(detalheId);
   renderTable();
   toast('Demanda transferida para ' + para + '!');
