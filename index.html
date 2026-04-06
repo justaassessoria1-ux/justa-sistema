@@ -254,6 +254,24 @@
   .hist-data { color: var(--color-text-tertiary); margin-left: auto; }
   .parcela-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 
+
+  /* TELA DE SENHA */
+  .senha-screen {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: var(--navy); z-index: 1000;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    padding: 24px;
+  }
+  .senha-logo { font-family: 'Cormorant Garamond', serif; font-size: 48px; font-weight: 700; color: var(--white); letter-spacing: 6px; margin-bottom: 4px; }
+  .senha-sub { font-size: 11px; color: var(--gold); letter-spacing: 3px; text-transform: uppercase; margin-bottom: 48px; }
+  .senha-box { background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12); border-radius: 12px; padding: 32px; width: 100%; max-width: 340px; text-align: center; }
+  .senha-title { font-size: 14px; color: rgba(255,255,255,0.7); margin-bottom: 20px; letter-spacing: 0.5px; }
+  .senha-input { width: 100%; padding: 12px 16px; font-size: 20px; font-family: 'DM Sans', sans-serif; text-align: center; letter-spacing: 8px; border: 1px solid rgba(255,255,255,0.2); border-radius: 8px; background: rgba(255,255,255,0.08); color: var(--white); outline: none; transition: border-color 0.2s; margin-bottom: 14px; }
+  .senha-input:focus { border-color: var(--gold); }
+  .senha-btn { width: 100%; padding: 12px; font-size: 14px; font-weight: 500; font-family: 'DM Sans', sans-serif; border: none; border-radius: 8px; background: var(--gold); color: var(--navy); cursor: pointer; transition: all 0.15s; }
+  .senha-btn:hover { background: var(--gold-light); }
+  .senha-erro { font-size: 12px; color: #E57373; margin-top: 10px; display: none; }
+  .senha-footer { margin-top: 40px; font-size: 11px; color: rgba(255,255,255,0.25); letter-spacing: 1px; }
   /* TELA DE LOGIN */
   .login-screen {
     position: fixed; top: 0; left: 0; width: 100%; height: 100%;
@@ -440,6 +458,19 @@
 </head>
 <body>
 
+<!-- TELA DE SENHA -->
+<div class="senha-screen" id="senha-screen">
+  <div class="senha-logo">JUSTA</div>
+  <div class="senha-sub">Assessoria Documental</div>
+  <div class="senha-box">
+    <div class="senha-title">Digite a senha de acesso</div>
+    <input class="senha-input" type="password" id="senha-input" placeholder="••••" maxlength="10" onkeydown="if(event.key==='Enter')verificarSenha()" />
+    <button class="senha-btn" onclick="verificarSenha()">Entrar</button>
+    <div class="senha-erro" id="senha-erro">Senha incorreta. Tente novamente.</div>
+  </div>
+  <div class="senha-footer">JUSTA © 2026</div>
+</div>
+
 <!-- TELA DE LOGIN -->
 <div class="login-screen" id="login-screen">
   <div class="login-logo">JUSTA</div>
@@ -483,6 +514,14 @@
         <line x1="13" y1="10" x2="13" y2="8"/><line x1="13" y1="14" x2="13" y2="15"/>
       </svg>
       Tabela de preços
+    </div>
+    <div class="nav-item" id="nav-controle" onclick="showView('controle')" style="display:none;">
+      <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+        <rect x="1" y="1" width="14" height="14" rx="2"/>
+        <line x1="4" y1="11" x2="4" y2="6"/><line x1="7" y1="11" x2="7" y2="4"/>
+        <line x1="10" y1="11" x2="10" y2="7"/><line x1="13" y1="11" x2="13" y2="5"/>
+      </svg>
+      Controle financeiro
     </div>
   </nav>
   <div class="sidebar-footer">Justa © 2026</div>
@@ -569,6 +608,54 @@
       </div>
     </div>
 
+    <!-- CONTROLE FINANCEIRO (só Vinícius e admin) -->
+    <div id="view-controle" style="display:none">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px;flex-wrap:wrap;">
+        <select id="controle-mes" onchange="renderControle()" style="padding:7px 12px;font-size:13px;font-family:'DM Sans',sans-serif;border:1px solid var(--gray-light);border-radius:6px;background:var(--white);color:var(--navy);outline:none;">
+        </select>
+        <span style="font-size:13px;color:var(--gray-text);">Selecione o mês</span>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-bottom:20px;">
+        <div style="background:var(--white);border:1px solid var(--gray-light);border-radius:10px;padding:16px 18px;border-top:3px solid #1A6B3C;">
+          <div style="font-size:10px;color:var(--gray-text);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;">Total entradas</div>
+          <div style="font-family:'Cormorant Garamond',serif;font-size:28px;font-weight:700;color:#1A6B3C;" id="ctrl-total">R$ 0,00</div>
+        </div>
+        <div style="background:var(--white);border:1px solid var(--gray-light);border-radius:10px;padding:16px 18px;border-top:3px solid var(--navy);">
+          <div style="font-size:10px;color:var(--gray-text);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;">Demandas fechadas</div>
+          <div style="font-family:'Cormorant Garamond',serif;font-size:28px;font-weight:700;color:var(--navy);" id="ctrl-count">0</div>
+        </div>
+        <div style="background:var(--white);border:1px solid var(--gray-light);border-radius:10px;padding:16px 18px;border-top:3px solid var(--gold);">
+          <div style="font-size:10px;color:var(--gray-text);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;">Ticket médio</div>
+          <div style="font-family:'Cormorant Garamond',serif;font-size:28px;font-weight:700;color:var(--gold);" id="ctrl-ticket">R$ 0,00</div>
+        </div>
+      </div>
+      <div style="background:var(--white);border:1px solid var(--gray-light);border-radius:10px;overflow:hidden;margin-bottom:16px;">
+        <table style="width:100%;border-collapse:collapse;">
+          <thead><tr style="background:var(--navy);">
+            <th style="padding:11px 14px;font-size:10px;font-weight:500;text-transform:uppercase;letter-spacing:1.2px;color:rgba(255,255,255,0.7);text-align:left;">Cliente</th>
+            <th style="padding:11px 14px;font-size:10px;font-weight:500;text-transform:uppercase;letter-spacing:1.2px;color:rgba(255,255,255,0.7);text-align:left;">Serviço</th>
+            <th style="padding:11px 14px;font-size:10px;font-weight:500;text-transform:uppercase;letter-spacing:1.2px;color:rgba(255,255,255,0.7);text-align:left;">Colaborador</th>
+            <th style="padding:11px 14px;font-size:10px;font-weight:500;text-transform:uppercase;letter-spacing:1.2px;color:rgba(255,255,255,0.7);text-align:left;">Qtd</th>
+            <th style="padding:11px 14px;font-size:10px;font-weight:500;text-transform:uppercase;letter-spacing:1.2px;color:rgba(255,255,255,0.7);text-align:left;">Valor</th>
+            <th style="padding:11px 14px;font-size:10px;font-weight:500;text-transform:uppercase;letter-spacing:1.2px;color:rgba(255,255,255,0.7);text-align:left;">Data</th>
+          </tr></thead>
+          <tbody id="tabela-controle"></tbody>
+        </table>
+      </div>
+      <!-- POR SERVIÇO -->
+      <div style="background:var(--white);border:1px solid var(--gray-light);border-radius:10px;overflow:hidden;">
+        <div style="padding:12px 16px;border-bottom:1px solid var(--gray-light);font-size:13px;font-weight:500;color:var(--navy);">Resumo por tipo de serviço</div>
+        <table style="width:100%;border-collapse:collapse;">
+          <thead><tr style="background:var(--off-white);">
+            <th style="padding:10px 14px;font-size:10px;font-weight:500;text-transform:uppercase;letter-spacing:1px;color:var(--gray-text);text-align:left;">Serviço</th>
+            <th style="padding:10px 14px;font-size:10px;font-weight:500;text-transform:uppercase;letter-spacing:1px;color:var(--gray-text);text-align:left;">Quantidade total</th>
+            <th style="padding:10px 14px;font-size:10px;font-weight:500;text-transform:uppercase;letter-spacing:1px;color:var(--gray-text);text-align:left;">Total arrecadado</th>
+          </tr></thead>
+          <tbody id="tabela-controle-servico"></tbody>
+        </table>
+      </div>
+    </div>
+
     <!-- TABELA DE PREÇOS -->
     <div id="view-precos" style="display:none">
       <div style="display:flex;justify-content:flex-end;margin-bottom:16px;">
@@ -599,19 +686,27 @@
       </div>
       <div class="field">
         <label>Tipo de serviço *</label>
-        <input type="text" id="f-tipo" placeholder="Ex: Escritura, Inventário, Procuração..." list="lista-servicos" oninput="sugerirValor()" />
-        <datalist id="lista-servicos" id="lista-servicos-datalist"></datalist>
+        <input type="text" id="f-tipo" placeholder="Ex: Escritura, Xerox, Procuração..." list="lista-servicos" oninput="sugerirValor()" />
+        <datalist id="lista-servicos"></datalist>
+      </div>
+      <div class="fields-row">
+        <div class="field">
+          <label>Quantidade</label>
+          <input type="number" id="f-quantidade" placeholder="1" min="1" value="1" oninput="calcularValorTotal()" />
+        </div>
+        <div class="field">
+          <label>Valor unitário (R$)</label>
+          <input type="number" id="f-valor-unit" placeholder="0,00" min="0" step="0.01" oninput="calcularValorTotal()" readonly style="background:var(--off-white);color:var(--gray-text);" />
+        </div>
       </div>
       <div class="field">
         <label>Responsável *</label>
         <select id="f-resp"><option value="">Selecione...</option></select>
       </div>
       <div class="field">
-        <label>Valor do serviço (R$)</label>
-        <div style="display:flex;gap:8px;align-items:center;">
-          <input type="number" id="f-valor" placeholder="0,00" min="0" step="0.01" style="flex:1;" />
-          <span style="font-size:11px;color:var(--gray-text);white-space:nowrap;">Preço da tabela: <span id="f-valor-sugerido" style="color:var(--navy);font-weight:500;">—</span></span>
-        </div>
+        <label>Valor total (R$)</label>
+        <input type="number" id="f-valor" placeholder="0,00" min="0" step="0.01" />
+        <div style="font-size:11px;color:var(--gray-text);margin-top:4px;">Preço unitário da tabela: <span id="f-valor-sugerido" style="color:var(--navy);font-weight:500;">—</span></div>
       </div>
       <div class="field">
         <label>Observações</label>
@@ -912,14 +1007,15 @@ function setFilter(el) {
 }
 
 function showView(view) {
-  ['demandas','clientes','equipe','precos'].forEach(v=>document.getElementById('view-'+v).style.display=v===view?'block':'none');
-  ['demandas','clientes','equipe','precos'].forEach(v=>document.getElementById('nav-'+v).classList.remove('active'));
+  ['demandas','clientes','equipe','precos','controle'].forEach(v=>document.getElementById('view-'+v).style.display=v===view?'block':'none');
+  ['demandas','clientes','equipe','precos','controle'].forEach(v=>{ const el=document.getElementById('nav-'+v); if(el) el.classList.remove('active'); });
   document.getElementById('nav-'+view).classList.add('active');
-  const titles = { demandas:'Demandas', clientes:'Clientes', equipe:'Colaboradores', precos:'Tabela de preços' };
+  const titles = { demandas:'Demandas', clientes:'Clientes', equipe:'Colaboradores', precos:'Tabela de preços', controle:'Controle financeiro' };
   document.getElementById('view-title').textContent = titles[view];
   if (view==='clientes') renderClientes();
   if (view==='equipe') { renderEquipeTabela(); renderEquipeListaConfig(); }
   if (view==='precos') renderPrecos();
+  if (view==='controle') { initControle(); renderControle(); }
 }
 
 function toggleParcelas() {
@@ -939,7 +1035,8 @@ function openModal(id) {
 function closeModal(id) {
   document.getElementById(id).classList.remove('open');
   if (id==='modal-nova') {
-    ['f-nome','f-tel','f-obs','f-valor','f-entrada','f-parcelas'].forEach(x=>{ const el=document.getElementById(x); if(el) el.value=''; });
+    ['f-nome','f-tel','f-obs','f-valor','f-entrada','f-parcelas','f-valor-unit'].forEach(x=>{ const el=document.getElementById(x); if(el) el.value=''; });
+    const fqtd = document.getElementById('f-quantidade'); if(fqtd) fqtd.value='1';
     document.getElementById('f-tipo').value='';
     document.getElementById('f-resp').value='';
     const fpag = document.getElementById('f-pagamento'); if(fpag) fpag.value='';
@@ -961,6 +1058,7 @@ async function salvarDemanda() {
   const parcelas = parseInt(document.getElementById('f-parcelas').value) || 0;
   const obs = document.getElementById('f-obs').value.trim() || null;
   const contato = document.getElementById('f-tel').value.trim() || null;
+  const quantidade = parseInt(document.getElementById('f-quantidade').value) || 1;
   const { data, error } = await db.from('demandas').insert([{
     nome, tipo, resp,
     tel: contato,
@@ -969,6 +1067,7 @@ async function salvarDemanda() {
     pagamento,
     entrada,
     parcelas,
+    quantidade,
     status: 'Em aberto',
     data: hoje()
   }]).select();
@@ -1188,6 +1287,33 @@ async function transferirDemanda() {
   toast('Demanda transferida para ' + para + '!');
 }
 
+
+// ── SENHA DE ACESSO ──
+const SENHA_CORRETA = '0425';
+
+function verificarSenha() {
+  const input = document.getElementById('senha-input').value;
+  if (input === SENHA_CORRETA) {
+    sessionStorage.setItem('justa_autenticado', '1');
+    document.getElementById('senha-screen').style.display = 'none';
+    iniciarLogin();
+  } else {
+    document.getElementById('senha-erro').style.display = 'block';
+    document.getElementById('senha-input').value = '';
+    document.getElementById('senha-input').focus();
+    setTimeout(() => document.getElementById('senha-erro').style.display = 'none', 3000);
+  }
+}
+
+function checarAutenticacao() {
+  const autenticado = sessionStorage.getItem('justa_autenticado');
+  if (autenticado === '1') {
+    document.getElementById('senha-screen').style.display = 'none';
+    iniciarLogin();
+  }
+  // Se não autenticado, a tela de senha já está visível por padrão
+}
+
 // ── LOGIN ──
 let usuarioAtual = null;
 
@@ -1231,6 +1357,12 @@ function entrarSistema() {
   document.getElementById('user-banner').style.display = 'flex';
   document.getElementById('banner-nome').textContent = usuarioAtual === 'admin' ? 'Administrador' : usuarioAtual;
   document.getElementById('banner-avatar').textContent = iniciais(usuarioAtual === 'admin' ? 'AD' : usuarioAtual);
+  // Mostrar aba controle só para Vinícius e admin
+  const navControle = document.getElementById('nav-controle');
+  if (navControle) {
+    const temAcesso = usuarioAtual === 'admin' || usuarioAtual.toLowerCase().includes('vinicius') || usuarioAtual.toLowerCase().includes('vinícius');
+    navControle.style.display = temAcesso ? 'flex' : 'none';
+  }
   renderMinhasDemandas();
   renderTable();
 }
@@ -1242,6 +1374,17 @@ function sair() {
   document.getElementById('user-banner').style.display = 'none';
   document.getElementById('minhas-demandas-section').style.display = 'none';
   renderLoginGrid();
+}
+
+function sairSistema() {
+  sessionStorage.removeItem('justa_autenticado');
+  usuarioAtual = null;
+  localStorage.removeItem('justa_usuario');
+  document.getElementById('senha-screen').style.display = 'flex';
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('user-banner').style.display = 'none';
+  document.getElementById('minhas-demandas-section').style.display = 'none';
+  document.getElementById('senha-input').value = '';
 }
 
 function renderMinhasDemandas() {
@@ -1266,6 +1409,86 @@ function renderMinhasDemandas() {
     </div>`).join('');
 }
 
+
+
+// ── QUANTIDADE E VALOR TOTAL ──
+function calcularValorTotal() {
+  const qtd = parseFloat(document.getElementById('f-quantidade').value) || 1;
+  const unitario = parseFloat(document.getElementById('f-valor-unit').value) || 0;
+  const fValor = document.getElementById('f-valor');
+  if (unitario > 0) fValor.value = (qtd * unitario).toFixed(2);
+}
+
+// ── CONTROLE FINANCEIRO ──
+function initControle() {
+  const sel = document.getElementById('controle-mes');
+  if (!sel) return;
+  const meses = new Set();
+  const agora = new Date();
+  const mesAtual = agora.getFullYear() + '-' + String(agora.getMonth()+1).padStart(2,'0');
+  meses.add(mesAtual);
+  demandas.forEach(d => { if (d.data) { const p = d.data.split('/'); if (p.length===3) meses.add(p[2]+'-'+p[1]); } });
+  const sorted = [...meses].filter(Boolean).sort((a,b) => b.localeCompare(a));
+  const nomes = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+  sel.innerHTML = sorted.map(m => { const [y,mo] = m.split('-'); return `<option value="${m}">${nomes[parseInt(mo)-1]} ${y}</option>`; }).join('');
+}
+
+function renderControle() {
+  const sel = document.getElementById('controle-mes');
+  if (!sel) return;
+  const mesSel = sel.value;
+  if (!mesSel) return;
+  const [ano, mes] = mesSel.split('-');
+
+  const doMes = demandas.filter(d => {
+    if (!d.data) return false;
+    const p = d.data.split('/');
+    return p.length === 3 && p[2] === ano && p[1] === mes;
+  });
+
+  const total = doMes.reduce((s,d) => s + (parseFloat(d.valor)||0), 0);
+  const ticket = doMes.length > 0 ? total / doMes.length : 0;
+  document.getElementById('ctrl-total').textContent = fmtMoeda(total);
+  document.getElementById('ctrl-count').textContent = doMes.length;
+  document.getElementById('ctrl-ticket').textContent = fmtMoeda(ticket);
+
+  // Tabela principal
+  const tbody = document.getElementById('tabela-controle');
+  if (!doMes.length) {
+    tbody.innerHTML = `<tr><td colspan="6"><div class="empty-state">Nenhuma demanda neste mês.</div></td></tr>`;
+    document.getElementById('tabela-controle-servico').innerHTML = '';
+    return;
+  }
+
+  tbody.innerHTML = doMes.map(d => `
+    <tr style="border-bottom:1px solid var(--gray-light);">
+      <td style="padding:11px 14px;font-size:13px;font-weight:500;color:var(--navy);">${d.nome||'—'}</td>
+      <td style="padding:11px 14px;font-size:12px;color:var(--gray-text);">${d.tipo||'—'}</td>
+      <td style="padding:11px 14px;font-size:13px;">${d.resp||'—'}</td>
+      <td style="padding:11px 14px;font-size:13px;text-align:center;">${d.quantidade||1}</td>
+      <td style="padding:11px 14px;font-size:13px;font-weight:500;color:#1A6B3C;">${fmtMoeda(d.valor)}</td>
+      <td style="padding:11px 14px;font-size:12px;color:var(--gray-text);">${d.data||'—'}</td>
+    </tr>`).join('');
+
+  // Resumo por serviço
+  const porServico = {};
+  doMes.forEach(d => {
+    const tipo = d.tipo || 'Outros';
+    if (!porServico[tipo]) porServico[tipo] = { qtd: 0, total: 0 };
+    porServico[tipo].qtd += (parseInt(d.quantidade)||1);
+    porServico[tipo].total += (parseFloat(d.valor)||0);
+  });
+
+  const tbody2 = document.getElementById('tabela-controle-servico');
+  tbody2.innerHTML = Object.entries(porServico)
+    .sort((a,b) => b[1].total - a[1].total)
+    .map(([tipo, info]) => `
+      <tr style="border-bottom:1px solid var(--gray-light);">
+        <td style="padding:11px 14px;font-size:13px;font-weight:500;color:var(--navy);">${tipo}</td>
+        <td style="padding:11px 14px;font-size:13px;">${info.qtd}</td>
+        <td style="padding:11px 14px;font-size:13px;font-weight:500;color:#1A6B3C;">${fmtMoeda(info.total)}</td>
+      </tr>`).join('');
+}
 
 // ── TABELA DE PREÇOS ──
 let precos = JSON.parse(localStorage.getItem('justa_precos') || '[]');
@@ -1326,12 +1549,14 @@ function sugerirValor() {
   const tipo = (document.getElementById('f-tipo').value || '').trim();
   const preco = precos.find(p => p.nome.toLowerCase() === tipo.toLowerCase());
   const sugeridoEl = document.getElementById('f-valor-sugerido');
+  const fUnit = document.getElementById('f-valor-unit');
   if (preco) {
     if (sugeridoEl) sugeridoEl.textContent = fmtMoeda(preco.valor);
-    const fValor = document.getElementById('f-valor');
-    if (fValor && !fValor.value) fValor.value = preco.valor;
+    if (fUnit) fUnit.value = preco.valor;
+    calcularValorTotal();
   } else {
     if (sugeridoEl) sugeridoEl.textContent = '—';
+    if (fUnit) fUnit.value = '';
   }
 }
 
@@ -1370,7 +1595,7 @@ async function init() {
   colaboradores = c || [];
   renderTable();
   renderEquipeSelect();
-  iniciarLogin();
+  checarAutenticacao();
 }
 
 init();
