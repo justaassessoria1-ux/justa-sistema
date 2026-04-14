@@ -264,8 +264,8 @@ function gerarRecibo() {
   }
 
   .filters-bar {
-    display: flex; gap: 6px; flex-wrap: wrap;
-    margin-bottom: 20px; align-items: center;
+    display: flex; align-items: center; gap: 8px;
+    flex-wrap: wrap; margin-bottom: 16px;
   }
 
   .filter-chip {
@@ -279,13 +279,14 @@ function gerarRecibo() {
   .filter-chip.active { background: var(--navy); color: var(--white); border-color: var(--navy); }
 
   .search-input {
-    margin-left: auto; padding: 7px 14px;
+    padding: 8px 28px 8px 34px;
     font-size: 13px; font-family: 'DM Sans', sans-serif;
-    border: 1px solid var(--gray-light); border-radius: 6px;
+    border: 1.5px solid var(--gray-light); border-radius: 99px;
     background: var(--white); color: var(--navy);
-    width: 200px; outline: none; transition: border-color 0.15s;
+    width: 230px; outline: none; transition: all 0.15s;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
   }
-  .search-input:focus { border-color: var(--navy); }
+  .search-input:focus { border-color: var(--navy); box-shadow: 0 0 0 3px rgba(26,35,126,0.08); }
   .search-input::placeholder { color: var(--gray-mid); }
 
   .table-wrap {
@@ -1671,13 +1672,37 @@ function renderControle() {
       </tr>`).join('');
 }
 
-// ── TABELA DE PREÇOS ──
-let precos = JSON.parse(localStorage.getItem('justa_precos') || '[]');
-let nextPrecoId = parseInt(localStorage.getItem('justa_precos_nextid') || '1');
+// ── TABELA DE PREÇOS — salvo no Supabase ──
+let precos = [];
 
-function savePrecos() {
-  localStorage.setItem('justa_precos', JSON.stringify(precos));
-  localStorage.setItem('justa_precos_nextid', String(nextPrecoId));
+// IMPORTANTE: Execute no Supabase da Justa:
+// CREATE TABLE IF NOT EXISTS tabela_precos (
+//   id bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+//   nome text NOT NULL,
+//   valor numeric NOT NULL,
+//   obs text,
+//   created_at timestamp with time zone DEFAULT now()
+// );
+async function loadPrecos() {
+  try {
+    const { data, error } = await supabase
+      .from('tabela_precos')
+      .select('*')
+      .order('created_at', { ascending: true });
+    if (!error && data) {
+      precos = data;
+      renderPrecos();
+      atualizarListaServicos();
+    }
+  } catch(e) {
+    // fallback localStorage
+    precos = JSON.parse(localStorage.getItem('justa_precos') || '[]');
+    renderPrecos();
+  }
+}
+
+async function savePrecos() {
+  // Não usado mais — cada operação salva individualmente
 }
 
 function fmtMoeda(v) {
@@ -1702,15 +1727,26 @@ function renderPrecos() {
   if (dl) dl.innerHTML = precos.map(p => `<option value="${p.nome}">`).join('');
 }
 
-function salvarPreco() {
+async function salvarPreco() {
   const nome = document.getElementById('fp-nome').value.trim();
   const valor = parseFloat(document.getElementById('fp-valor').value);
   const obsEl = document.getElementById('fp-obs');
   const obs = obsEl ? obsEl.value.trim() : '';
   if (!nome || !valor) { alert('Preencha o nome e o valor do serviço.'); return; }
-  precos.push({ id: nextPrecoId++, nome, valor, obs });
-  savePrecos();
+  try {
+    const { data, error } = await supabase
+      .from('tabela_precos')
+      .insert([{ nome, valor, obs }])
+      .select();
+    if (error) throw error;
+    precos.push(data[0]);
+  } catch(e) {
+    // fallback localStorage
+    precos.push({ id: Date.now(), nome, valor, obs });
+    localStorage.setItem('justa_precos', JSON.stringify(precos));
+  }
   renderPrecos();
+  atualizarListaServicos();
   closeModal('modal-preco');
   document.getElementById('fp-nome').value = '';
   document.getElementById('fp-valor').value = '';
@@ -1718,11 +1754,15 @@ function salvarPreco() {
   toast('Serviço cadastrado na tabela!');
 }
 
-function deletarPreco(id) {
+async function deletarPreco(id) {
   if (!confirm('Remover este serviço da tabela?')) return;
+  try {
+    await supabase.from('tabela_precos').delete().eq('id', id);
+  } catch(e) {}
   precos = precos.filter(p => p.id !== id);
-  savePrecos();
+  localStorage.setItem('justa_precos', JSON.stringify(precos));
   renderPrecos();
+  atualizarListaServicos();
   toast('Serviço removido.');
 }
 
@@ -1777,6 +1817,8 @@ async function init() {
   renderTable();
   renderEquipeSelect();
   checarAutenticacao();
+  // Carregar tabela de preços do Supabase
+  loadPrecos();
 }
 
 init();
