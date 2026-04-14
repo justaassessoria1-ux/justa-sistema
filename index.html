@@ -7,26 +7,30 @@
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2">
 // ── PAINEL FINANCEIRO ──
-function atualizarPainelFinanceiro(demandas) {
+function atualizarPainelFinanceiro(lista) {
+  // Usar TODAS as demandas para o financeiro, não só as filtradas
+  const todas = demandas;
   let total = 0, recebido = 0, count = 0;
-  demandas.forEach(d => {
+  todas.forEach(d => {
     const val = parseFloat(d.valor_servico) || 0;
     if (val > 0) { total += val; count++; }
-    // Calcular recebido com base nas parcelas
-    if (d.financeiro) {
-      try {
-        const fin = typeof d.financeiro === 'string' ? JSON.parse(d.financeiro) : d.financeiro;
-        if (fin.parcelas) {
-          fin.parcelas.forEach(p => { if (p.pago) recebido += parseFloat(p.valor) || 0; });
-        } else if (fin.pago) {
-          recebido += val;
-        }
-      } catch(e) {
-        // financeiro simples
-        if (d.status_pagamento === 'Pago') recebido += val;
+    // Calcular recebido
+    try {
+      const fin = d.financeiro ? (typeof d.financeiro === 'string' ? JSON.parse(d.financeiro) : d.financeiro) : null;
+      if (fin && fin.parcelas && Array.isArray(fin.parcelas)) {
+        fin.parcelas.forEach(p => {
+          if (p.pago) recebido += parseFloat(p.valor) || 0;
+        });
+      } else if (fin && fin.pago) {
+        recebido += val;
+      } else if (d.status_pagamento === 'Pago' || d.status_pagamento === 'pago') {
+        recebido += val;
+      } else if (d.status === 'Concluído' && val > 0 && !fin) {
+        // Se concluído e sem registro de financeiro, considera recebido
+        // (não adicionar para não inflar)
       }
-    } else if (d.status_pagamento === 'Pago') {
-      recebido += val;
+    } catch(e) {
+      if (d.status_pagamento === 'Pago') recebido += val;
     }
   });
   const areceber = total - recebido;
@@ -690,15 +694,15 @@ function gerarRecibo() {
         <button class="filter-chip" data-filter="Aguardando doc." onclick="setFilter(this)">Aguardando doc.</button>
         <button class="filter-chip" data-filter="Concluído" onclick="setFilter(this)">Concluído</button>
         <button class="filter-chip" data-filter="Cancelado" onclick="setFilter(this)">Cancelado</button>
-        <div style="position:relative;margin-left:auto;">
-          <svg style="position:absolute;left:10px;top:50%;transform:translateY(-50%);width:14px;height:14px;opacity:0.4;pointer-events:none;" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-          <input class="search-input" type="text" placeholder="Buscar cliente..." id="search-input" oninput="renderTable()" style="padding-left:32px;width:220px;"/>
-          <button id="btn-limpar-busca" onclick="document.getElementById('search-input').value='';renderTable();this.style.display='none';" style="display:none;position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:16px;color:#999;line-height:1;">×</button>
+        <div style="position:relative;margin-left:auto;display:flex;align-items:center;">
+          <svg style="position:absolute;left:10px;top:50%;transform:translateY(-50%);width:15px;height:15px;color:var(--gray-mid);pointer-events:none;z-index:1;" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <input class="search-input" type="text" placeholder="Buscar cliente..." id="search-input" oninput="renderTable()" style="padding-left:34px;padding-right:28px;width:230px;border-radius:20px;"/>
+          <button id="btn-limpar-busca" onclick="document.getElementById('search-input').value='';renderTable();this.style.display='none';" style="display:none;position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:18px;color:#999;line-height:1;z-index:1;">×</button>
         </div>
       </div>
 
       <!-- PAINEL FINANCEIRO RESUMO -->
-      <div id="painel-financeiro" style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px;">
+      <div id="painel-financeiro" style="display:none;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px;">
         <div style="background:var(--white);border:1px solid var(--gray-light);border-radius:10px;padding:16px 18px;border-top:3px solid #27500A;">
           <div style="font-size:10px;color:var(--color-text-secondary);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:6px;">Total em serviços</div>
           <div style="font-family:'Fraunces',serif;font-size:26px;font-weight:700;color:#27500A;" id="resumo-total">R$ 0,00</div>
@@ -1533,6 +1537,13 @@ function entrarSistema() {
     const temAcesso = usuarioAtual === 'admin' || usuarioAtual.toLowerCase().includes('vinicius') || usuarioAtual.toLowerCase().includes('vinícius');
     navControle.style.display = temAcesso ? 'flex' : 'none';
   }
+  // Mostrar painel financeiro só para Vinícius
+  const isVinicius = usuarioAtual === 'admin' || usuarioAtual.toLowerCase().includes('vinicius') || usuarioAtual.toLowerCase().includes('vinícius');
+  const painelFin = document.getElementById('painel-financeiro');
+  if (painelFin) painelFin.style.display = isVinicius ? 'grid' : 'none';
+  // Botão recibo só para Vinícius
+  const btnRecibo = document.getElementById('btn-gerar-recibo');
+  if (btnRecibo) btnRecibo.style.display = isVinicius ? 'inline-flex' : 'none';
   renderMinhasDemandas();
   renderTable();
 }
