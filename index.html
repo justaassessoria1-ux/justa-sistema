@@ -5,7 +5,105 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Justa — Gestão de Demandas</title>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2">
+// ── PAINEL FINANCEIRO ──
+function atualizarPainelFinanceiro(demandas) {
+  let total = 0, recebido = 0, count = 0;
+  demandas.forEach(d => {
+    const val = parseFloat(d.valor_servico) || 0;
+    if (val > 0) { total += val; count++; }
+    // Calcular recebido com base nas parcelas
+    if (d.financeiro) {
+      try {
+        const fin = typeof d.financeiro === 'string' ? JSON.parse(d.financeiro) : d.financeiro;
+        if (fin.parcelas) {
+          fin.parcelas.forEach(p => { if (p.pago) recebido += parseFloat(p.valor) || 0; });
+        } else if (fin.pago) {
+          recebido += val;
+        }
+      } catch(e) {
+        // financeiro simples
+        if (d.status_pagamento === 'Pago') recebido += val;
+      }
+    } else if (d.status_pagamento === 'Pago') {
+      recebido += val;
+    }
+  });
+  const areceber = total - recebido;
+  const ticket = count > 0 ? total / count : 0;
+  const fmt = v => 'R$ ' + v.toLocaleString('pt-BR', {minimumFractionDigits:2, maximumFractionDigits:2});
+  const el = (id, val) => { const e = document.getElementById(id); if(e) e.textContent = val; };
+  el('resumo-total', fmt(total));
+  el('resumo-total-sub', count + ' demanda' + (count !== 1 ? 's' : '') + ' com valor');
+  el('resumo-recebido', fmt(recebido));
+  el('resumo-areceber', fmt(areceber));
+  el('resumo-ticket', fmt(ticket));
+}
+
+// ── GERAR RECIBO ──
+function gerarRecibo() {
+  const id = detalheId;
+  if (!id) return;
+  const d = demandas.find(x=>x.id===id);
+  if (!d) return;
+
+  // Pegar dados da demanda
+  const nome = d.nome || '—';
+  const tipo = d.tipo || '—';
+  const valNum = parseFloat(d.valor_servico) || 0;
+  const valor = valNum > 0 ? 'R$ ' + valNum.toLocaleString('pt-BR',{minimumFractionDigits:2}) : '—';
+  const pagamento = document.getElementById('d-pagamento')?.textContent || d.pagamento || '—';
+  const status = d.status || '—';
+  const resp = d.resp || d.responsavel || '—';
+  const data = d.data || new Date().toLocaleDateString('pt-BR');
+
+  const num = 'REC-' + String(id).slice(-6).toUpperCase().padStart(6,'0');
+  const dataRecibo = new Date().toLocaleDateString('pt-BR', {day:'2-digit',month:'long',year:'numeric'});
+
+  const html = `
+    <div class="recibo-header">
+      <div>
+        <div class="recibo-logo">Justa <span>Assessoria</span></div>
+        <div style="font-size:12px;color:#6b7280;margin-top:3px;">Assessoria Documental Imobiliária e Cartorária</div>
+      </div>
+      <div class="recibo-num">
+        <div style="font-size:16px;font-weight:700;color:#1C1F2E;">RECIBO</div>
+        <div style="margin-top:3px;">${num}</div>
+        <div style="margin-top:2px;">${dataRecibo}</div>
+      </div>
+    </div>
+
+    <div>
+      <div class="recibo-row"><span class="recibo-lbl">Cliente</span><span class="recibo-val">${nome}</span></div>
+      <div class="recibo-row"><span class="recibo-lbl">Serviço</span><span class="recibo-val">${tipo}</span></div>
+      <div class="recibo-row"><span class="recibo-lbl">Responsável</span><span class="recibo-val">${resp}</span></div>
+      <div class="recibo-row"><span class="recibo-lbl">Forma de pagamento</span><span class="recibo-val">${pagamento}</span></div>
+      <div class="recibo-row"><span class="recibo-lbl">Data do serviço</span><span class="recibo-val">${data}</span></div>
+      <div class="recibo-row"><span class="recibo-lbl">Status</span><span class="recibo-val">${status}</span></div>
+    </div>
+
+    <div class="recibo-total">
+      <span class="recibo-total-lbl">Valor total</span>
+      <span class="recibo-total-val">${valor}</span>
+    </div>
+
+    <div class="recibo-assinatura">
+      <div class="recibo-ass-linha">Justa Assessoria<br>Prestador de Serviços</div>
+      <div class="recibo-ass-linha">${nome}<br>Cliente</div>
+    </div>
+
+    <div class="recibo-footer">
+      Justa Assessoria Documental Imobiliária e Cartorária — Barra do Choça/BA<br>
+      Este recibo é válido como comprovante de pagamento pelo serviço descrito acima.<br>
+      Emitido em ${dataRecibo} via sistema OrganizaJusta.
+    </div>`;
+
+  document.getElementById('recibo-conteudo').innerHTML = html;
+  closeModal('modal-detalhe');
+  openModal('modal-recibo');
+}
+
+</script>
 <style>
   :root {
     --navy: #060A3E;
@@ -454,6 +552,26 @@
     .topbar, .content { padding: 14px 16px; }
     .fields-row { grid-template-columns: 1fr; }
   }
+
+  @media print {
+    body * { visibility: hidden !important; }
+    #recibo-print, #recibo-print * { visibility: visible !important; }
+    #recibo-print { position: fixed !important; top: 0; left: 0; width: 100%; z-index: 99999; background: white !important; padding: 40px !important; }
+  }
+  .recibo-container { font-family: 'DM Sans', sans-serif; max-width: 600px; margin: 0 auto; padding: 40px; background: white; border: 1px solid #e5e7eb; border-radius: 12px; }
+  .recibo-header { border-bottom: 2px solid #1C1F2E; padding-bottom: 20px; margin-bottom: 24px; display: flex; justify-content: space-between; align-items: flex-start; }
+  .recibo-logo { font-family: 'Fraunces', serif; font-size: 22px; font-weight: 700; color: #1C1F2E; }
+  .recibo-logo span { color: #C9A84C; }
+  .recibo-num { font-size: 12px; color: #6b7280; text-align: right; }
+  .recibo-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 0.5px solid #f3f4f6; font-size: 14px; }
+  .recibo-lbl { color: #6b7280; }
+  .recibo-val { font-weight: 500; color: #111827; }
+  .recibo-total { background: #f9fafb; border-radius: 8px; padding: 16px; margin-top: 20px; display: flex; justify-content: space-between; align-items: center; }
+  .recibo-total-lbl { font-size: 13px; font-weight: 600; color: #374151; text-transform: uppercase; letter-spacing: 0.8px; }
+  .recibo-total-val { font-family: 'Fraunces', serif; font-size: 28px; font-weight: 700; color: #27500A; }
+  .recibo-footer { margin-top: 24px; padding-top: 16px; border-top: 1px solid #e5e7eb; font-size: 12px; color: #9ca3af; text-align: center; line-height: 1.6; }
+  .recibo-assinatura { margin-top: 40px; display: flex; justify-content: space-between; }
+  .recibo-ass-linha { width: 200px; border-top: 1px solid #374151; padding-top: 8px; text-align: center; font-size: 12px; color: #6b7280; }
 </style>
 </head>
 <body>
@@ -572,7 +690,35 @@
         <button class="filter-chip" data-filter="Aguardando doc." onclick="setFilter(this)">Aguardando doc.</button>
         <button class="filter-chip" data-filter="Concluído" onclick="setFilter(this)">Concluído</button>
         <button class="filter-chip" data-filter="Cancelado" onclick="setFilter(this)">Cancelado</button>
-        <input class="search-input" type="text" placeholder="Buscar cliente..." id="search-input" oninput="renderTable()" />
+        <div style="position:relative;margin-left:auto;">
+          <svg style="position:absolute;left:10px;top:50%;transform:translateY(-50%);width:14px;height:14px;opacity:0.4;pointer-events:none;" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <input class="search-input" type="text" placeholder="Buscar cliente..." id="search-input" oninput="renderTable()" style="padding-left:32px;width:220px;"/>
+          <button id="btn-limpar-busca" onclick="document.getElementById('search-input').value='';renderTable();this.style.display='none';" style="display:none;position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:16px;color:#999;line-height:1;">×</button>
+        </div>
+      </div>
+
+      <!-- PAINEL FINANCEIRO RESUMO -->
+      <div id="painel-financeiro" style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px;">
+        <div style="background:var(--white);border:1px solid var(--gray-light);border-radius:10px;padding:16px 18px;border-top:3px solid #27500A;">
+          <div style="font-size:10px;color:var(--color-text-secondary);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:6px;">Total em serviços</div>
+          <div style="font-family:'Fraunces',serif;font-size:26px;font-weight:700;color:#27500A;" id="resumo-total">R$ 0,00</div>
+          <div style="font-size:11px;color:var(--color-text-secondary);margin-top:3px;" id="resumo-total-sub">0 demandas</div>
+        </div>
+        <div style="background:var(--white);border:1px solid var(--gray-light);border-radius:10px;padding:16px 18px;border-top:3px solid #1d4ed8;">
+          <div style="font-size:10px;color:var(--color-text-secondary);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:6px;">Recebido</div>
+          <div style="font-family:'Fraunces',serif;font-size:26px;font-weight:700;color:#1d4ed8;" id="resumo-recebido">R$ 0,00</div>
+          <div style="font-size:11px;color:var(--color-text-secondary);margin-top:3px;">Pagamentos confirmados</div>
+        </div>
+        <div style="background:var(--white);border:1px solid var(--gray-light);border-radius:10px;padding:16px 18px;border-top:3px solid #d97706;">
+          <div style="font-size:10px;color:var(--color-text-secondary);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:6px;">A receber</div>
+          <div style="font-family:'Fraunces',serif;font-size:26px;font-weight:700;color:#d97706;" id="resumo-areceber">R$ 0,00</div>
+          <div style="font-size:11px;color:var(--color-text-secondary);margin-top:3px;">Saldo pendente</div>
+        </div>
+        <div style="background:var(--white);border:1px solid var(--gray-light);border-radius:10px;padding:16px 18px;border-top:3px solid #791F1F;">
+          <div style="font-size:10px;color:var(--color-text-secondary);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:6px;">Ticket médio</div>
+          <div style="font-family:'Fraunces',serif;font-size:26px;font-weight:700;color:#791F1F;" id="resumo-ticket">R$ 0,00</div>
+          <div style="font-size:11px;color:var(--color-text-secondary);margin-top:3px;">Por demanda com valor</div>
+        </div>
       </div>
 
       <div class="table-wrap">
@@ -673,6 +819,23 @@
 </main>
 
 <!-- MODAL NOVA DEMANDA -->
+<!-- MODAL RECIBO -->
+<div class="modal-overlay" id="modal-recibo" style="display:none;">
+  <div class="modal-box" style="max-width:640px;" id="recibo-print">
+    <div class="modal-header">
+      <div class="modal-title">Recibo de Pagamento</div>
+      <button class="modal-close" onclick="closeModal('modal-recibo')">×</button>
+    </div>
+    <div class="modal-body" style="padding:0;">
+      <div class="recibo-container" id="recibo-conteudo"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-secondary" onclick="closeModal('modal-recibo')">Fechar</button>
+      <button class="btn-primary" onclick="window.print()" style="background:#27500A;border-color:#27500A;">🖨️ Imprimir / Salvar PDF</button>
+    </div>
+  </div>
+</div>
+
 <div class="modal-overlay" id="modal-nova">
   <div class="modal-box">
     <div class="modal-header">
@@ -942,10 +1105,15 @@ function renderMetrics() {
 }
 
 function renderTable() {
+  const q = document.getElementById('search-input')?.value || '';
+  const btnLimpar = document.getElementById('btn-limpar-busca');
+  if (btnLimpar) btnLimpar.style.display = q ? 'block' : 'none';
   renderMetrics();
   const search = (document.getElementById('search-input')?.value||'').toLowerCase();
   let lista = filtroAtivo==='todos' ? demandas : demandas.filter(d=>d.status===filtroAtivo);
   if (search) lista = lista.filter(d=>(d.nome||'').toLowerCase().includes(search));
+  // Atualizar painel financeiro com demandas filtradas
+  atualizarPainelFinanceiro(filtroAtivo==='todos' ? demandas : lista);
   const tbody = document.getElementById('tabela-demandas');
   if (!lista.length) { tbody.innerHTML=`<tr><td colspan="5"><div class="empty-state">Nenhuma demanda encontrada.</div></td></tr>`; return; }
   tbody.innerHTML = lista.map(d=>`
@@ -1084,6 +1252,8 @@ function openDetalhe(id) {
   detalheId = id;
   const d = demandas.find(x=>x.id===id);
   document.getElementById('d-nome-header').textContent = d.nome;
+  const dNomeEl = document.getElementById('d-nome');
+  if(dNomeEl) dNomeEl.textContent = d.nome;
   document.getElementById('d-tel').textContent = d.contato||'—';
   document.getElementById('d-tipo').textContent = d.tipo||'—';
   document.getElementById('d-resp').textContent = d.resp||'—';
