@@ -1612,29 +1612,36 @@ async function transferirDemanda() {
 const SENHA_CORRETA = '0425';
 
 function verificarSenha() {
-  const input = (document.getElementById('senha-input').value || '').trim();
-  console.log('Verificando senha:', input, '=== CORRETA:', SENHA_CORRETA, '?', input === SENHA_CORRETA);
+  const inputEl = document.getElementById('senha-input');
+  const input = (inputEl ? inputEl.value : '').trim();
   if (input === SENHA_CORRETA) {
     sessionStorage.setItem('justa_autenticado', '1');
-    const senhaEl = document.getElementById('senha-screen');
-    if (senhaEl) senhaEl.style.display = 'none';
-    iniciarLogin();
+    // Esconder tela de senha
+    document.getElementById('senha-screen').style.display = 'none';
+    // Se dados já carregaram, iniciar login
+    // Se não, init() vai chamar iniciarLogin() quando terminar
+    if (demandas !== undefined) {
+      iniciarLogin();
+    } else {
+      // Mostrar indicador de carregamento
+      const ls = document.getElementById('login-screen');
+      if (ls) ls.style.display = 'flex';
+      const grid = document.getElementById('login-grid');
+      if (grid) grid.innerHTML = '<div style="color:rgba(255,255,255,0.6);text-align:center;grid-column:1/-1;padding:20px;">Carregando...</div>';
+    }
   } else {
-    const erroEl = document.getElementById('senha-erro');
-    if (erroEl) erroEl.style.display = 'block';
-    document.getElementById('senha-input').value = '';
-    document.getElementById('senha-input').focus();
-    setTimeout(() => document.getElementById('senha-erro').style.display = 'none', 3000);
+    document.getElementById('senha-erro').style.display = 'block';
+    if (inputEl) { inputEl.value = ''; inputEl.focus(); }
+    setTimeout(() => {
+      const erroEl = document.getElementById('senha-erro');
+      if (erroEl) erroEl.style.display = 'none';
+    }, 3000);
   }
 }
 
 function checarAutenticacao() {
-  const autenticado = sessionStorage.getItem('justa_autenticado');
-  if (autenticado === '1') {
-    document.getElementById('senha-screen').style.display = 'none';
-    iniciarLogin();
-  }
-  // Se não autenticado, a tela de senha já está visível por padrão
+  // Autenticação já verificada pelo IIFE no carregamento
+  // Esta função é mantida por compatibilidade
 }
 
 // ── LOGIN ──
@@ -1959,18 +1966,36 @@ async function salvarEdicaoCliente() {
   toast('Cliente atualizado!');
 }
 
+// Verificar autenticação IMEDIATAMENTE ao carregar a página
+// Não espera o Supabase responder
+(function() {
+  const autenticado = sessionStorage.getItem('justa_autenticado');
+  if (autenticado === '1') {
+    // Já autenticado — esconde senha, mostra login
+    const ss = document.getElementById('senha-screen');
+    if (ss) ss.style.display = 'none';
+  }
+  // Se não autenticado, a tela de senha já está visível por padrão (display:flex no CSS)
+})();
+
 async function init() {
-  const [{ data: d }, { data: c }] = await Promise.all([
-    db.from('demandas').select('*').order('created_at', { ascending: false }),
-    db.from('colaboradores').select('*').order('created_at', { ascending: true })
-  ]);
-  demandas = d || [];
-  colaboradores = c || [];
-  renderTable();
-  renderEquipeSelect();
-  checarAutenticacao();
-  // Carregar tabela de preços do Supabase
-  loadPrecos();
+  try {
+    const [{ data: d }, { data: c }] = await Promise.all([
+      db.from('demandas').select('*').order('created_at', { ascending: false }),
+      db.from('colaboradores').select('*').order('created_at', { ascending: true })
+    ]);
+    demandas = d || [];
+    colaboradores = c || [];
+    renderTable();
+    renderEquipeSelect();
+    // Se já autenticado, carregar o login de usuário
+    if (sessionStorage.getItem('justa_autenticado') === '1') {
+      iniciarLogin();
+    }
+    loadPrecos();
+  } catch(err) {
+    console.error('Erro ao carregar dados:', err);
+  }
 }
 
 init();
