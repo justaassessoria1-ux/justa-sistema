@@ -1433,7 +1433,30 @@ function renderRelFin() {
   });
 
   // SAÍDAS: lançamentos manuais do mês
-  const saidas = saidasFin.filter(s => s.mes === mes);
+  const saidasManuais = saidasFin.filter(s => s.mes === mes);
+
+  // SAÍDAS: saídas registradas dentro das demandas no mês
+  const saidasDemandas = [];
+  demandas.forEach(d => {
+    if (!d.data) return;
+    const partes = d.data.split('/');
+    if (partes.length !== 3) return;
+    if (partes[2] !== ano || partes[1] !== m) return;
+    const saidasD = d.saidas ? (typeof d.saidas === 'string' ? JSON.parse(d.saidas) : d.saidas) : [];
+    saidasD.forEach(s => {
+      saidasDemandas.push({
+        id: 'dem_'+d.id+'_'+Math.random(),
+        desc: s.desc + ' (' + d.nome + ')',
+        valor: parseFloat(s.valor) || 0,
+        data: d.data,
+        mes,
+        origem: 'demanda'
+      });
+    });
+  });
+
+  // Unir saídas manuais + saídas das demandas
+  const saidas = [...saidasManuais, ...saidasDemandas];
 
   const totEnt = entradas.reduce((acc, d) => acc + (parseFloat(d.valor) || 0), 0);
   const totSai = saidas.reduce((acc, s) => acc + (parseFloat(s.valor) || 0), 0);
@@ -1466,9 +1489,9 @@ function renderRelFin() {
     <div class="lanc-item">
       <div class="lanc-dot sai"></div>
       <div class="lanc-desc">${s.desc}</div>
-      <span class="lanc-data">${s.data}</span>
+      <span class="lanc-data">${s.data||''}</span>
       <span class="lanc-val sai">- ${fmtMoeda(s.valor)}</span>
-      <button onclick="removerSaidaFin('${s.id}')" style="background:none;border:none;cursor:pointer;color:var(--gray-mid);font-size:16px;padding:0 4px;">×</button>
+      ${!s.origem ? `<button onclick="removerSaidaFin('${s.id}')" style="background:none;border:none;cursor:pointer;color:var(--gray-mid);font-size:16px;padding:0 4px;">×</button>` : '<span style="font-size:10px;color:var(--gray-mid);padding:0 4px;" title="Saída registrada na demanda">📋</span>'}
     </div>`).join('')
     : '<div class="lanc-item" style="padding-bottom:0;"><span style="color:var(--gray-text);font-size:13px;">Nenhuma saída lançada.</span></div>';
 
