@@ -186,6 +186,36 @@
   .detail-row span:first-child{color:var(--gray-text)}
   .detail-row span:last-child{font-weight:500;color:var(--navy)}
   .empty-state{text-align:center;padding:48px 24px;color:var(--gray-text);font-size:14px}
+  .rel-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:12px;}
+  .rel-mes-sel{padding:8px 14px;font-size:13px;font-family:'DM Sans',sans-serif;border:1px solid var(--gray-light);border-radius:6px;background:var(--white);color:var(--navy);outline:none;}
+  .rel-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:24px;}
+  .rel-card{background:var(--white);border:1px solid var(--gray-light);border-radius:10px;padding:18px 20px;border-top:3px solid;}
+  .rel-card.rc-ent{border-top-color:#27500A;}
+  .rel-card.rc-sai{border-top-color:#791F1F;}
+  .rel-card.rc-sal{border-top-color:var(--gold);}
+  .rel-card-label{font-size:10px;color:var(--gray-text);text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px;}
+  .rel-card-value{font-family:'Cormorant Garamond',serif;font-size:30px;font-weight:700;}
+  .rel-card-value.green{color:#27500A;}
+  .rel-card-value.red{color:#791F1F;}
+  .rel-card-value.gold{color:var(--gold);}
+  .rel-section-title{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.8px;color:var(--gray-text);margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;}
+  .lanc-item{display:flex;align-items:center;gap:12px;padding:11px 16px;border-bottom:1px solid var(--gray-light);font-size:13px;transition:background .1s;}
+  .lanc-item:last-child{border-bottom:none;}
+  .lanc-item:hover{background:var(--off-white);}
+  .lanc-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;}
+  .lanc-dot.ent{background:#27500A;}
+  .lanc-dot.sai{background:#791F1F;}
+  .lanc-desc{flex:1;color:var(--navy);}
+  .lanc-data{font-size:11px;color:var(--gray-text);flex-shrink:0;}
+  .lanc-val{font-weight:600;flex-shrink:0;}
+  .lanc-val.ent{color:#27500A;}
+  .lanc-val.sai{color:#791F1F;}
+  .nova-saida-fin{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap;}
+  .nova-saida-fin input{flex:1;min-width:120px;padding:8px 12px;font-size:13px;font-family:'DM Sans',sans-serif;border:1px solid var(--gray-light);border-radius:6px;color:var(--navy);background:var(--white);outline:none;}
+  .nova-saida-fin input:focus{border-color:var(--navy);}
+  .btn-add-saida{padding:8px 16px;font-size:13px;font-family:'DM Sans',sans-serif;background:var(--navy);color:var(--white);border:none;border-radius:6px;cursor:pointer;white-space:nowrap;}
+  .btn-add-saida:hover{background:var(--navy-mid);}
+
   .toast{position:fixed;bottom:24px;right:24px;background:var(--navy);color:var(--white);padding:12px 20px;border-radius:8px;font-size:13px;z-index:9999;opacity:0;transition:opacity .3s;pointer-events:none}
   .toast.show{opacity:1}
   .hist-item{display:flex;gap:8px;padding:7px 0;border-bottom:.5px solid var(--gray-light);font-size:12px}
@@ -274,8 +304,8 @@
       Tabela de preços
     </div>
     <div class="nav-item" id="nav-controle" style="display:none" onclick="showView('controle')">
-      <svg class="nav-icon" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
-      Controle
+      <svg class="nav-icon" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>
+      Financeiro
     </div>
   </nav>
   <div class="sidebar-footer">Justa © 2026</div>
@@ -403,11 +433,87 @@
       </div>
     </div>
 
-    <!-- VIEW CONTROLE -->
+    <!-- VIEW FINANCEIRO (só Vinícius) -->
     <div id="view-controle" style="display:none;">
-      <div class="table-wrap" style="padding:24px;">
-        <p style="font-size:13px;color:var(--gray-text);">Painel de controle administrativo.</p>
+
+      <!-- CABEÇALHO -->
+      <div class="rel-header">
+        <div>
+          <div style="font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:600;color:var(--navy);">Relatório Financeiro</div>
+          <div style="font-size:12px;color:var(--gray-text);margin-top:2px;">Entradas, saídas e saldo por mês</div>
+        </div>
+        <select class="rel-mes-sel" id="rel-mes" onchange="renderRelFin()"></select>
       </div>
+
+      <!-- CARDS RESUMO -->
+      <div class="rel-cards">
+        <div class="rel-card rc-ent">
+          <div class="rel-card-label">Entradas no mês</div>
+          <div class="rel-card-value green" id="rf-entradas">R$ 0,00</div>
+          <div style="font-size:11px;color:var(--gray-text);margin-top:4px;" id="rf-ent-qtd">0 recebimentos</div>
+        </div>
+        <div class="rel-card rc-sai">
+          <div class="rel-card-label">Saídas no mês</div>
+          <div class="rel-card-value red" id="rf-saidas">R$ 0,00</div>
+          <div style="font-size:11px;color:var(--gray-text);margin-top:4px;" id="rf-sai-qtd">0 lançamentos</div>
+        </div>
+        <div class="rel-card rc-sal">
+          <div class="rel-card-label">Saldo do mês</div>
+          <div class="rel-card-value gold" id="rf-saldo">R$ 0,00</div>
+          <div style="font-size:11px;color:var(--gray-text);margin-top:4px;">Entradas − Saídas</div>
+        </div>
+      </div>
+
+      <!-- LANÇAMENTOS -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+
+        <!-- ENTRADAS -->
+        <div class="table-wrap">
+          <div style="padding:14px 16px;border-bottom:1px solid var(--gray-light);">
+            <div class="rel-section-title" style="margin-bottom:0;">
+              <span>Entradas</span>
+              <span style="color:#27500A;font-weight:700;" id="rf-ent-total">R$ 0,00</span>
+            </div>
+          </div>
+          <div id="rf-lista-entradas">
+            <div class="lanc-item"><span style="color:var(--gray-text);font-size:13px;">Nenhuma entrada no mês.</span></div>
+          </div>
+        </div>
+
+        <!-- SAÍDAS -->
+        <div class="table-wrap">
+          <div style="padding:14px 16px;border-bottom:1px solid var(--gray-light);">
+            <div class="rel-section-title" style="margin-bottom:0;">
+              <span>Saídas</span>
+              <span style="color:#791F1F;font-weight:700;" id="rf-sai-total">R$ 0,00</span>
+            </div>
+          </div>
+          <div id="rf-lista-saidas">
+            <div class="lanc-item"><span style="color:var(--gray-text);font-size:13px;">Nenhuma saída no mês.</span></div>
+          </div>
+          <!-- ADICIONAR SAÍDA -->
+          <div style="padding:12px 16px;border-top:1px solid var(--gray-light);background:var(--off-white);">
+            <div style="font-size:11px;color:var(--gray-text);margin-bottom:8px;font-weight:500;text-transform:uppercase;letter-spacing:.5px;">Registrar saída</div>
+            <div class="nova-saida-fin">
+              <input type="text" id="fin-saida-desc" placeholder="Ex: Impressões, combustível..."/>
+              <input type="number" id="fin-saida-valor" placeholder="R$ 0,00" step="0.01" style="max-width:110px;"/>
+              <button class="btn-add-saida" onclick="addSaidaFin()">+ Adicionar</button>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- HISTÓRICO COMPLETO -->
+      <div style="margin-top:16px;" class="table-wrap">
+        <div style="padding:14px 16px;border-bottom:1px solid var(--gray-light);">
+          <div class="rel-section-title" style="margin-bottom:0;">Todos os lançamentos do mês</div>
+        </div>
+        <div id="rf-historico">
+          <div class="lanc-item"><span style="color:var(--gray-text);font-size:13px;">Nenhum lançamento.</span></div>
+        </div>
+      </div>
+
     </div>
 
   </div>
@@ -783,11 +889,12 @@ function showView(v) {
     const n = document.getElementById('nav-'+x);
     if (n) n.classList.toggle('active', x===v);
   });
-  const titulos = {demandas:'Demandas',clientes:'Clientes',equipe:'Equipe',precos:'Tabela de Preços',controle:'Controle'};
+  const titulos = {demandas:'Demandas',clientes:'Clientes',equipe:'Equipe',precos:'Tabela de Preços',controle:'Financeiro'};
   document.getElementById('view-title').textContent = titulos[v]||v;
   if (v==='clientes') renderClientes();
   if (v==='equipe') renderEquipeTabela();
   if (v==='precos') renderPrecos();
+  if (v==='controle') initRelFin();
 }
 
 // ═══════════════════════════════════════════
@@ -1285,6 +1392,126 @@ function gerarRecibo() {
     <div class="recibo-footer">Justa Assessoria Documental Imobiliária e Cartorária — Barra do Choça/BA<br>Emitido em ${dt}.</div>`;
   closeModal('modal-detalhe');
   openModal('modal-recibo');
+}
+
+// ═══════════════════════════════════════════
+// RELATÓRIO FINANCEIRO
+// ═══════════════════════════════════════════
+let saidasFin = JSON.parse(localStorage.getItem('justa_saidas_fin') || '[]');
+
+function saveSaidasFin() {
+  localStorage.setItem('justa_saidas_fin', JSON.stringify(saidasFin));
+}
+
+function initRelFin() {
+  const sel = document.getElementById('rel-mes');
+  if (!sel) return;
+  // Gerar lista de meses (6 meses para trás + atual)
+  const meses = [];
+  const agora = new Date();
+  for (let i = 0; i <= 11; i++) {
+    const d = new Date(agora.getFullYear(), agora.getMonth() - i, 1);
+    const val = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+    const nms = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+    meses.push({ val, label: `${nms[d.getMonth()]} ${d.getFullYear()}` });
+  }
+  sel.innerHTML = meses.map(m => `<option value="${m.val}">${m.label}</option>`).join('');
+  renderRelFin();
+}
+
+function renderRelFin() {
+  const mes = document.getElementById('rel-mes')?.value;
+  if (!mes) return;
+  const [ano, m] = mes.split('-');
+
+  // ENTRADAS: demandas pagas/concluídas no mês
+  const entradas = demandas.filter(d => {
+    if (!d.data) return false;
+    const partes = d.data.split('/');
+    if (partes.length !== 3) return false;
+    return partes[2] === ano && partes[1] === m && d.status === 'Concluído' && parseFloat(d.valor) > 0;
+  });
+
+  // SAÍDAS: lançamentos manuais do mês
+  const saidas = saidasFin.filter(s => s.mes === mes);
+
+  const totEnt = entradas.reduce((acc, d) => acc + (parseFloat(d.valor) || 0), 0);
+  const totSai = saidas.reduce((acc, s) => acc + (parseFloat(s.valor) || 0), 0);
+  const saldo = totEnt - totSai;
+
+  // Cards
+  document.getElementById('rf-entradas').textContent = fmtMoeda(totEnt);
+  document.getElementById('rf-ent-qtd').textContent = entradas.length + ' recebimento' + (entradas.length !== 1 ? 's' : '');
+  document.getElementById('rf-saidas').textContent = fmtMoeda(totSai);
+  document.getElementById('rf-sai-qtd').textContent = saidas.length + ' lançamento' + (saidas.length !== 1 ? 's' : '');
+  document.getElementById('rf-saldo').textContent = fmtMoeda(saldo);
+  document.getElementById('rf-saldo').className = 'rel-card-value ' + (saldo >= 0 ? 'gold' : 'red');
+  document.getElementById('rf-ent-total').textContent = fmtMoeda(totEnt);
+  document.getElementById('rf-sai-total').textContent = fmtMoeda(totSai);
+
+  // Lista entradas
+  const elEnt = document.getElementById('rf-lista-entradas');
+  elEnt.innerHTML = entradas.length ? entradas.map(d => `
+    <div class="lanc-item" onclick="openDetalhe(${d.id})" style="cursor:pointer;">
+      <div class="lanc-dot ent"></div>
+      <div class="lanc-desc">${d.nome} <span style="color:var(--gray-text);font-size:12px;">— ${d.tipo||'—'}</span></div>
+      <span class="lanc-data">${d.data}</span>
+      <span class="lanc-val ent">+ ${fmtMoeda(d.valor)}</span>
+    </div>`).join('')
+    : '<div class="lanc-item"><span style="color:var(--gray-text);font-size:13px;">Nenhuma entrada registrada.</span></div>';
+
+  // Lista saídas
+  const elSai = document.getElementById('rf-lista-saidas');
+  elSai.innerHTML = saidas.length ? saidas.map((s, i) => `
+    <div class="lanc-item">
+      <div class="lanc-dot sai"></div>
+      <div class="lanc-desc">${s.desc}</div>
+      <span class="lanc-data">${s.data}</span>
+      <span class="lanc-val sai">- ${fmtMoeda(s.valor)}</span>
+      <button onclick="removerSaidaFin('${s.id}')" style="background:none;border:none;cursor:pointer;color:var(--gray-mid);font-size:16px;padding:0 4px;">×</button>
+    </div>`).join('')
+    : '<div class="lanc-item" style="padding-bottom:0;"><span style="color:var(--gray-text);font-size:13px;">Nenhuma saída lançada.</span></div>';
+
+  // Histórico completo (entradas + saídas misturadas por data)
+  const todos = [
+    ...entradas.map(d => ({ tipo:'ent', desc: d.nome+' — '+( d.tipo||''), valor: parseFloat(d.valor)||0, data: d.data })),
+    ...saidas.map(s => ({ tipo:'sai', desc: s.desc, valor: parseFloat(s.valor)||0, data: s.data }))
+  ].sort((a, b) => {
+    const pa = a.data.split('/').reverse().join('-');
+    const pb = b.data.split('/').reverse().join('-');
+    return pb.localeCompare(pa);
+  });
+
+  const elHist = document.getElementById('rf-historico');
+  elHist.innerHTML = todos.length ? todos.map(t => `
+    <div class="lanc-item">
+      <div class="lanc-dot ${t.tipo}"></div>
+      <div class="lanc-desc">${t.desc}</div>
+      <span class="lanc-data">${t.data}</span>
+      <span class="lanc-val ${t.tipo}">${t.tipo==='ent'?'+':'-'} ${fmtMoeda(t.valor)}</span>
+    </div>`).join('')
+    : '<div class="lanc-item"><span style="color:var(--gray-text);font-size:13px;">Nenhum lançamento neste mês.</span></div>';
+}
+
+function addSaidaFin() {
+  const desc = document.getElementById('fin-saida-desc').value.trim();
+  const valor = parseFloat(document.getElementById('fin-saida-valor').value);
+  if (!desc || !valor) { toast('Preencha a descrição e o valor.'); return; }
+  const mes = document.getElementById('rel-mes').value;
+  saidasFin.push({ id: Date.now().toString(), desc, valor, mes, data: hoje() });
+  saveSaidasFin();
+  document.getElementById('fin-saida-desc').value = '';
+  document.getElementById('fin-saida-valor').value = '';
+  renderRelFin();
+  toast('Saída registrada!');
+}
+
+function removerSaidaFin(id) {
+  if (!confirm('Remover este lançamento?')) return;
+  saidasFin = saidasFin.filter(s => s.id !== id);
+  saveSaidasFin();
+  renderRelFin();
+  toast('Lançamento removido.');
 }
 
 // ═══════════════════════════════════════════
