@@ -605,7 +605,7 @@
       </div>
       <div class="field">
         <label>Status</label>
-        <select id="d-status" onchange="atualizarStatus()">
+        <select id="d-status" onchange="salvarStatusDemanda()">
           <option>Em aberto</option>
           <option>Em andamento</option>
           <option>Aguardando doc.</option>
@@ -972,7 +972,7 @@ async function salvarDemanda() {
   const parcelas = parseInt(document.getElementById('f-parcelas')?.value)||0;
   const quantidade = document.getElementById('f-quantidade')?.value||'';
   if (!nome||!tipo) { alert('Preencha o nome e o serviço.'); return; }
-  const btn = document.getElementById('btn-salvar-nova');
+  const btn = document.getElementById('btn-salvar');
   btn.disabled=true; btn.textContent='Salvando...';
   const {data,error} = await db.from('demandas').insert([{
     nome,tipo,resp,tel:contato,obs,valor,pagamento,entrada,parcelas,quantidade,
